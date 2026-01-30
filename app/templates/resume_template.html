@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ cv.personal_info.name }} - Resume</title>
+    <title>{{ cv.personal_info.full_name }} - Resume</title>
 
     <style>
         body {
@@ -77,7 +77,7 @@
 
 <!-- ================= HEADER ================= -->
 <div class="header">
-    <h1>{{ cv.personal_info.name }}</h1>
+    <h1>{{ cv.personal_info.full_name }}</h1>
     <div class="contact">
         {% if cv.personal_info.email_address %}
             {{ cv.personal_info.email_address }}
@@ -95,10 +95,10 @@
 </div>
 
 <!-- ================= EDUCATION ================= -->
-{% if cv.education %}
+{% if cv.educations %}
 <section class="section">
     <h2>Education</h2>
-    {% for edu in cv.education %}
+    {% for edu in cv.educations %}
         <div class="item">
             <div class="item-header">
                 <span>{{ edu.degree }} in {{ edu.major }}</span>
@@ -118,10 +118,11 @@
 {% endif %}
 
 <!-- ================= PROFESSIONAL EXPERIENCE ================= -->
-{% if cv.professional_experience %}
+{% set professional_experiences = cv.experiences | selectattr("is_volunteer", "equalto", false) | list %}
+{% if professional_experiences %}
 <section class="section">
     <h2>Professional Experience</h2>
-    {% for exp in cv.professional_experience %}
+    {% for exp in professional_experiences %}
         <div class="item">
             <div class="item-header">
                 <span>{{ exp.role_title }}</span>
@@ -142,10 +143,11 @@
 {% endif %}
 
 <!-- ================= VOLUNTEER EXPERIENCE ================= -->
-{% if cv.volunteer_experience %}
+{% set volunteer_experiences = cv.experiences | selectattr("is_volunteer", "equalto", true) | list %}
+{% if volunteer_experiences %}
 <section class="section">
     <h2>Volunteer Experience</h2>
-    {% for exp in cv.volunteer_experience %}
+    {% for exp in volunteer_experiences %}
         <div class="item">
             <div class="item-header">
                 <span>{{ exp.role_title }}</span>
@@ -172,7 +174,13 @@
     {% for project in cv.projects %}
         <div class="item">
             <h3>{{ project.project_name }}</h3>
-            <div class="small">{{ project.description }}</div>
+            {% if project.description %}
+            <ul>
+                {% for bullet in project.description %}
+                    <li>{{ bullet }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             {% if project.project_link %}
                 <div class="small">Link: {{ project.project_link }}</div>
             {% endif %}
@@ -190,7 +198,7 @@
             <li>
                 {{ cert.certification_name }} |
                 {{ cert.issuing_organization }}
-                {% if cert.date %} | {{ cert.date }}{% endif %}
+                {% if cert.issue_date %} | {{ cert.issue_date }}{% endif %}
             </li>
         {% endfor %}
     </ul>
@@ -202,15 +210,26 @@
 <section class="section">
     <h2>Skills</h2>
 
+    {% set skill_type_val = namespace(technical=[], soft=[]) %}
+    {% for skill in cv.skills %}
+        {% set type_val = skill.skill_type.value if getattr(skill.skill_type, 'value', none) is not none else skill.skill_type %}
+        {% if type_val == "technical" %}{% set skill_type_val.technical = skill_type_val.technical + [skill.skill_name] %}{% endif %}
+        {% if type_val == "soft" %}{% set skill_type_val.soft = skill_type_val.soft + [skill.skill_name] %}{% endif %}
+    {% endfor %}
+
+    {% if skill_type_val.technical %}
     <div class="skills-group">
         <strong>Technical Skills:</strong>
-        {{ cv.skills | selectattr("skill_type", "equalto", "technical") | map(attribute="skill_name") | join(", ") }}
+        {{ skill_type_val.technical | join(", ") }}
     </div>
+    {% endif %}
 
+    {% if skill_type_val.soft %}
     <div class="skills-group">
         <strong>Soft Skills:</strong>
-        {{ cv.skills | selectattr("skill_type", "equalto", "soft") | map(attribute="skill_name") | join(", ") }}
+        {{ skill_type_val.soft | join(", ") }}
     </div>
+    {% endif %}
 </section>
 {% endif %}
 
@@ -220,7 +239,7 @@
     <h2>Languages</h2>
     <ul>
         {% for lang in cv.languages %}
-            <li>{{ lang.language }} — {{ lang.proficiency_level }}</li>
+            <li>{{ lang.language }} — {{ lang.proficiency_level.value if lang.proficiency_level else lang.proficiency_level }}</li>
         {% endfor %}
     </ul>
 </section>

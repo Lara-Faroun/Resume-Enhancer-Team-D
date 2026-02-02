@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +10,7 @@ class JobDescription(BaseModel):
     requirements: List[str] = Field(..., description="The requirements of the job such as the study field, experience..etc")
     required_skills: List[str] = Field(..., description="The skills required for the job")
     preferred_skills: List[str] = Field(..., description="The skills preferred for the job")
-    
+    seniority_level: Literal["junior", "mid", "senior", "lead"] = Field(default="mid", description="Seniority level (junior, mid, senior, lead)")
+    soft_skills: Optional[List[str]] = Field(default_factory=list, description="Soft skills mentioned")
     class Config:
         populate_by_name = True

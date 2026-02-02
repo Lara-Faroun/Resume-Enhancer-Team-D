@@ -12,6 +12,7 @@ from schemas.project import Project
 class Resume(BaseModel):
     """CV schema: single source of truth. Attribute names match resume_template.html (cv.*)."""
     personal_info: PersonalInfo = Field(..., description="The personal information of the user")
+    summary: str = Field(..., description="The summary of the user")
     educations: List[Education] = Field(..., description="The list of educations the user has")
     experiences: List[Experience] = Field(..., description="The list of experiences the user has")
     skills: List[Skill] = Field(..., description="The list of skills the user has")

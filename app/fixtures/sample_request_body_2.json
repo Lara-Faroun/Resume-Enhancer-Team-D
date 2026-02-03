@@ -1,0 +1,98 @@
+{
+    "resume": {
+      "personal_info": {
+        "full_name": "Jane Doe",
+        "phone_number": "+1 555 123 4567",
+        "email_address": "jane.doe@example.com",
+        "linkedin": "https://linkedin.com/in/janedoe",
+        "personal_website": null
+      },
+      "summary": "Computer Science graduate with 2+ years of backend development experience in Python and SQL. Focused on APIs and database design.",
+      "educations": [
+        {
+          "degree": "B.S.",
+          "major": "Computer Science",
+          "university_name": "State University",
+          "city": "Boston",
+          "country": "USA",
+          "start_date": "2018-09-01T00:00:00",
+          "end_date": "2022-06-01T00:00:00"
+        }
+      ],
+      "experiences": [
+        {
+          "role_title": "Junior Backend Developer",
+          "company_name": "Tech Corp",
+          "start_date": "2022-07-01T00:00:00",
+          "end_date": "2024-12-01T00:00:00",
+          "description": [
+            "Developed REST APIs in Python and maintained PostgreSQL databases.",
+            "Collaborated with frontend team on integration and error handling."
+          ],
+          "is_volunteer": false
+        }
+      ],
+      "skills": [
+        { "skill_name": "Python", "skill_type": "technical" },
+        { "skill_name": "SQL", "skill_type": "technical" },
+        { "skill_name": "REST APIs", "skill_type": "technical" },
+        { "skill_name": "Teamwork", "skill_type": "soft" }
+      ],
+      "certifications": [
+        {
+          "certification_name": "AWS Cloud Practitioner",
+          "issuing_organization": "Amazon Web Services",
+          "issue_date": "2023-03-15T00:00:00"
+        }
+      ],
+      "languages": [
+        { "language": "English", "proficiency_level": "C1" }
+      ],
+      "projects": [
+        {
+          "project_name": "Inventory API",
+          "description": [
+            "REST API for inventory management using FastAPI and SQLAlchemy."
+          ],
+          "project_link": "https://github.com/janedoe/inventory-api"
+        }
+      ]
+    },
+    "job_description": {
+      "job_title": "Senior Marketing Manager",
+      "company_name": "BrightBrand Agency",
+      "responsibilities": [
+        "Lead the global marketing strategy across digital and offline channels.",
+        "Own the paid acquisition budget and optimize ROI across campaigns.",
+        "Collaborate with sales and product teams to define positioning and messaging."
+      ],
+      "requirements": [
+        "7+ years of experience in marketing, preferably in B2C or B2B SaaS.",
+        "Proven track record managing multi-channel campaigns (SEO, SEM, paid social, email).",
+        "Strong experience with marketing analytics tools (Google Analytics, Mixpanel, HubSpot).",
+        "Experience leading and mentoring a team of marketers."
+      ],
+      "required_skills": [
+        "Marketing strategy",
+        "SEO",
+        "SEM",
+        "Paid social",
+        "Email marketing",
+        "Brand management"
+      ],
+      "preferred_skills": [
+        "HubSpot",
+        "Google Analytics",
+        "Content marketing",
+        "Copywriting",
+        "A/B testing"
+      ],
+      "seniority_level": "senior",
+      "soft_skills": [
+        "leadership",
+        "communication",
+        "stakeholder management",
+        "strategic thinking"
+      ]
+    }
+  }

@@ -48,7 +48,7 @@ def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, A
     - state.feedback_message: str
 
     No enhancement state is written on this path; enhanced_resume and
-    change_report remain unset.
+    report_summary remain unset.
     """
     logger.info("feedback_node: starting")
     try:

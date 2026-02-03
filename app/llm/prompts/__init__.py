@@ -13,6 +13,11 @@ from .feedback import (
     FEEDBACK_USER_TEMPLATE,
     build_feedback_prompt_user,
 )
+from .report import (
+    FEEDBACK_REPORT_SYSTEM,
+    FEEDBACK_REPORT_USER_TEMPLATE,
+    build_report_prompt_user,
+)
 
 __all__ = [
     "MAP_RESUME_JD_SYSTEM",
@@ -24,4 +29,7 @@ __all__ = [
     "FEEDBACK_SYSTEM",
     "FEEDBACK_USER_TEMPLATE",
     "build_feedback_prompt_user",
+    "FEEDBACK_REPORT_SYSTEM",
+    "FEEDBACK_REPORT_USER_TEMPLATE",
+    "build_report_prompt_user",
 ]

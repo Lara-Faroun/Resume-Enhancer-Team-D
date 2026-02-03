@@ -3,14 +3,14 @@ LangGraph state for the resume enhancer workflow.
 Raw inputs (resume_raw, job_description_text) are pre-input: parsing happens
 outside the graph. Only structured data and derived outputs live in state.
 """
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
 from schemas.mapping_result import MappingResult
-from schemas.enhancement import FullEnhancementOutput, ChangeReason
+from schemas.enhancement import FullEnhancementOutput
 
 
 class ResumeEnhancerState(BaseModel):
@@ -32,9 +32,9 @@ class ResumeEnhancerState(BaseModel):
         description="Enhanced sections and reasons, when score >= threshold.",
     )
     enhanced_resume: Optional[Resume] = Field(None, description="Final enhanced resume for export.")
-    change_report: List[ChangeReason] = Field(
-        default_factory=list,
-        description="All change reasons across sections for the report.",
+    report_summary: Optional[str] = Field(
+        None,
+        description="LLM-generated summary of changes for human-in-the-loop review.",
     )
 
     # --- Feedback path (when score < threshold) ---

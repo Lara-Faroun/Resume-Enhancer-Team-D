@@ -1,14 +1,16 @@
 """
-Report node: aggregate all ChangeReason entries from FullEnhancementOutput
-into a flat list stored on state.change_report.
-
-This node does not call an LLM; it is pure aggregation logic to support
-human-in-the-loop review of changes.
+Report node: collect all ChangeReason entries from FullEnhancementOutput,
+pass them to the LLM, and store the resulting summary in state.report_summary
+for human-in-the-loop review.
 """
 import logging
 from typing import Any, List
 
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
+
 from graph.state import ResumeEnhancerState
+from llm.prompts import FEEDBACK_REPORT_SYSTEM, build_report_prompt_user
 from schemas.enhancement import FullEnhancementOutput, ChangeReason
 
 logger = logging.getLogger(__name__)
@@ -68,24 +70,57 @@ def _collect_reasons(full_output: FullEnhancementOutput) -> List[ChangeReason]:
     return reasons
 
 
-def report_node(state: ResumeEnhancerState) -> dict[str, Any]:
+def _reasons_to_text(reasons: List[ChangeReason]) -> str:
+    """Format the list of ChangeReason for the LLM (one change per line)."""
+    if not reasons:
+        return ""
+    lines = []
+    for r in reasons:
+        lines.append(f"- {r.field_or_location}: {r.reason}")
+    return "\n".join(lines)
+
+
+def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
-    Build a flat change_report list from FullEnhancementOutput.
+    Collect change reasons from FullEnhancementOutput, ask the LLM to
+    summarize them, and store only the summary in state.report_summary.
 
     Input:
     - state.full_enhancement_output: FullEnhancementOutput
+    - llm: LangChain chat model (injected by graph)
 
     Output:
-    - state.change_report: List[ChangeReason]
+    - state.report_summary: str (LLM-generated summary)
     """
     logger.info("report_node: starting")
     try:
         full_output = _get_full_output(state)
         reasons = _collect_reasons(full_output)
     except Exception as e:
-        logger.exception("report_node: failed to build change_report: %s", e)
+        logger.exception("report_node: failed to collect reasons: %s", e)
         raise
 
-    logger.info("report_node: done reasons_count=%s", len(reasons))
-    return {"change_report": reasons}
+    logger.info("report_node: reasons_count=%s", len(reasons))
 
+    report_summary = None
+    if llm is not None and reasons:
+        try:
+            change_reasons_text = _reasons_to_text(reasons)
+            user_message = build_report_prompt_user(change_reasons_text)
+            result = llm.invoke(
+                [
+                    SystemMessage(content=FEEDBACK_REPORT_SYSTEM),
+                    HumanMessage(content=user_message),
+                ]
+            )
+            message_text = getattr(result, "content", None)
+            if isinstance(message_text, str) and message_text.strip():
+                report_summary = message_text.strip()
+            else:
+                logger.warning(
+                    "report_node: LLM returned empty or non-string content, using empty summary"
+                )
+        except Exception as e:
+            logger.exception("report_node: LLM summary failed: %s", e)
+
+    return {"report_summary": report_summary}

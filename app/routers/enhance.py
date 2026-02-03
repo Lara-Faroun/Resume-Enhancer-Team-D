@@ -52,7 +52,7 @@ def enhance(request: Request, body: EnhanceRequest):
 
     Returns the final graph state as JSON:
     - On enhance path: resume, job_description, mapping_result,
-      full_enhancement_output, enhanced_resume, change_report.
+      full_enhancement_output, enhanced_resume, report_summary.
     - On feedback path: resume, job_description, mapping_result,
       feedback_message.
     """

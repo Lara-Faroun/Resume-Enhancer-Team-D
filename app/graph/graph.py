@@ -7,7 +7,7 @@ This module builds a StateGraph with the following flow:
 
 - mapping, enhance, feedback use the shared LLM (Gemini or OpenAI) created
   once in main.py and injected here when building the graph.
-- format and report are pure Python nodes.
+- format is pure Python; report uses the shared LLM to summarize changes.
 """
 from typing import Any, Dict
 
@@ -40,9 +40,8 @@ def build_graph(llm: Any):
     graph.add_node("enhance", lambda state: enhance_node(state, llm))
     graph.add_node("feedback", lambda state: feedback_node(state, llm))
 
-    # Pure Python nodes
     graph.add_node("format", format_node)
-    graph.add_node("report", report_node)
+    graph.add_node("report", lambda state: report_node(state, llm))
 
     # Entry point
     graph.set_entry_point("mapping")

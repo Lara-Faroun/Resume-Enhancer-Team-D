@@ -34,20 +34,36 @@ For each change you make, add a concise ChangeReason explaining WHY the change
 improves alignment with the job description or clarity for the reader.
 """
 
-ENHANCE_USER_TEMPLATE = """## Resume (structured)
+ENHANCE_USER_TEMPLATE = """
+# Original Resume
 {resume_json}
 
-## Mapping result (structured)
+# Mapping Result (Gap Analysis)
 {mapping_result_json}
 
-Enhance the resume section by section following the rules and return a
-FullEnhancementOutput object."""
+# Previous Critique (Reflection Feedback)
+{feedback_context}
 
+# Instructions
+You are an expert Resume Writer. 
+Enhance the resume to better match the job description based on the mapping result.
+Address the gaps identified in the mapping.
+Rewrite bullet points to be more impactful, using action verbs and simple language.
 
-def build_enhance_prompt_user(resume_json: str, mapping_result_json: str) -> str:
+If "Previous Critique" is provided, you MUST address the specific points raised in the critique.
+
+Output the full enhanced content for each section.
+"""
+
+def build_enhance_prompt_user(
+    resume_json: str, 
+    mapping_result_json: str,
+    feedback: str = None
+) -> str:
     """Build the user message for the enhancement LLM call."""
+    feedback_context = f"feedback: {feedback}" if feedback else "No prior feedback."
     return ENHANCE_USER_TEMPLATE.format(
         resume_json=resume_json,
         mapping_result_json=mapping_result_json,
+        feedback_context=feedback_context
     )
-

@@ -54,10 +54,14 @@ def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     """
     logger.info("enhance_node: starting")
     resume, mapping_result = _get_enhancement_inputs(state)
+    
+    # Extract reflection feedback if available
+    feedback = state.reflection_feedback if not isinstance(state, dict) else state.get("reflection_feedback")
 
     if llm is None:
         logger.error("enhance_node: llm instance is None")
         raise ValueError("enhance_node requires a non-None llm instance")
+
 
     structured_llm = llm.with_structured_output(FullEnhancementOutput)
 
@@ -66,6 +70,7 @@ def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     user_message = build_enhance_prompt_user(
         resume_json=resume_json,
         mapping_result_json=mapping_result_json,
+        feedback=feedback
     )
 
     try:

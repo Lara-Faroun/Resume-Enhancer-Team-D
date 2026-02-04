@@ -38,7 +38,24 @@ class ResumeEnhancerState(BaseModel):
     )
 
     # --- Feedback path (when score < threshold) ---
+    # --- Feedback path (when score < threshold) ---
     feedback_message: Optional[str] = Field(None, description="User feedback when score below threshold.")
+
+    # --- Reflection Loop ---
+    reflection_feedback: Optional[str] = Field(
+        None, 
+        description="Critique from the reflection node to guide the next enhancement iteration."
+    )
+    reflection_iteration: int = Field(
+        0, 
+        description="Current iteration count of the reflection loop."
+    )
+    reflection_is_sufficient: bool = Field(
+        False,
+        description="Whether the reflection deemed the resume sufficient."
+    )
+
+
 
     class Config:
         arbitrary_types_allowed = True

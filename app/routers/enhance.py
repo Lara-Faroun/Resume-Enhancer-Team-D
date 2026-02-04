@@ -15,6 +15,48 @@ from graph.graph import run_resume_enhancer
 
 logger = logging.getLogger(__name__)
 
+def split_resume_sections(text: str) -> Dict[str, str]:
+    """
+    Split a resume string into sections (e.g. Skills, Experience, Education).
+    Returns a dict { "Skills": "...", "Experience": "...", ... }.
+    """
+    import re
+    
+    #  headers found in resumes
+    headers = [
+        "SKILLS", "EXPERIENCE", "WORK EXPERIENCE", "EDUCATION", 
+        "PROJECTS", "CERTIFICATIONS"
+    ]
+    
+    pattern = r'(?:\n|^)\s*(' + '|'.join(headers) + r')\s*(?:\n|:|$)'
+    
+    matches = list(re.finditer(pattern, text, re.IGNORECASE))
+    
+    sections = {}
+    if not matches:
+        return {"Uncategorized": text.strip()}
+        
+    if matches[0].start() > 0:
+        sections["Uncategorized"] = text[:matches[0].start()].strip()
+        
+    for i, match in enumerate(matches):
+        header = match.group(1).upper()
+        start = match.end()
+        
+        if i + 1 < len(matches):
+            end = matches[i+1].start()
+        else:
+            end = len(text)
+            
+        content = text[start:end].strip()
+        if content.startswith(":"):
+            content = content[1:].strip()
+            
+        sections[header] = content
+        
+    return sections
+
+
 router = APIRouter()
 
 
@@ -23,6 +65,20 @@ class EnhanceRequest(BaseModel):
 
     resume: Resume
     job_description: JobDescription
+
+
+class SplitRequest(BaseModel):
+    """Request body: raw resume text."""
+    text: str
+
+
+@router.post("/split")
+def split_resume(body: SplitRequest) -> Dict[str, str]:
+    """
+    Split resume text into sections using regex heuristics.
+    """
+    return split_resume_sections(body.text)
+
 
 
 def _state_to_jsonable(state: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from enums import LanguageProficiencyLevel
+from app.enums import LanguageProficiencyLevel
 
 
 class Language(BaseModel):

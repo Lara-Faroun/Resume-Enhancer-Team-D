@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from enums import SkillType
+from app.enums import SkillType
 
 
 class Skill(BaseModel):

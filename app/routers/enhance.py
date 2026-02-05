@@ -6,7 +6,7 @@ For testing: POST JSON body with resume and job_description; returns final state
 import logging
 from typing import Any, Dict
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from schemas.resume import Resume
@@ -59,10 +59,30 @@ def enhance(request: Request, body: EnhanceRequest):
     graph = getattr(request.app.state, "graph", None)
     if graph is None:
         logger.error("enhance: app.state.graph not set")
-        raise RuntimeError("Graph not initialized; check server startup.")
+        raise HTTPException(
+            status_code=503,
+            detail="Enhancement graph not initialized. Please try again later.",
+        )
 
     logger.info("enhance: invoking graph with provided resume and job_description")
-    state = run_resume_enhancer(graph, body.resume, body.job_description)
+
+    try:
+        state = run_resume_enhancer(graph, body.resume, body.job_description)
+    except Exception as exc:
+        # Log full stack trace for operators; return safe message to client.
+        logger.exception("enhance: graph invocation failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to run resume enhancement workflow.",
+        ) from exc
+
+    if not isinstance(state, dict):
+        logger.error("enhance: unexpected graph result type: %s", type(state))
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected enhancement result format.",
+        )
+
     jsonable = _state_to_jsonable(state)
     logger.info(
         "enhance: done keys=%s has_enhanced=%s has_feedback=%s",

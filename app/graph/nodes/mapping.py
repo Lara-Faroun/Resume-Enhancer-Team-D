@@ -8,25 +8,50 @@ passed into the graph when wiring nodes.
 """
 import logging
 from typing import Any
-from langchain_core.messages import HumanMessage, SystemMessage
+
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import HumanMessage, SystemMessage
+
+from graph.utils import log_node_timing
 from schemas.mapping_result import MappingResult
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
 from llm.prompts.mapping import MAP_RESUME_JD_SYSTEM, build_mapping_prompt_user
 
 logger = logging.getLogger(__name__)
 
 
+def _validate_and_normalize_mapping_result(result: MappingResult) -> MappingResult:
+    """
+    Validate mapping result and ensure list fields are present (default to empty).
+    Makes mapping output deterministic and safe for downstream nodes.
+    """
+    if not (1 <= result.match_score <= 10):
+        logger.error(
+            "mapping_node: match_score out of range [1, 10], got %s",
+            result.match_score,
+        )
+        raise ValueError(
+            f"mapping_node: match_score must be between 1 and 10, got {result.match_score}"
+        )
+    matched_skills = result.matched_skills if result.matched_skills is not None else []
+    matched_requirements = (
+        result.matched_requirements if result.matched_requirements is not None else []
+    )
+    gaps = result.gaps if result.gaps is not None else []
+    return MappingResult(
+        matched_skills=matched_skills,
+        matched_requirements=matched_requirements,
+        gaps=gaps,
+        match_score=result.match_score,
+    )
+
+
 def _get_resume_and_jd(state: ResumeEnhancerState) -> tuple[Resume, JobDescription]:
-    """Extract resume and job_description from state (dict or Pydantic)."""
-    if isinstance(state, dict):
-        resume = state.get("resume")
-        job_description = state.get("job_description")
-    else:
-        resume = getattr(state, "resume", None)
-        job_description = getattr(state, "job_description", None)
+    """Extract resume and job_description from state."""
+    resume = state.resume
+    job_description = state.job_description
     if resume is None:
         logger.error("mapping_node: state.resume is missing")
         raise ValueError("mapping_node requires state.resume")
@@ -36,6 +61,7 @@ def _get_resume_and_jd(state: ResumeEnhancerState) -> tuple[Resume, JobDescripti
     return resume, job_description
 
 
+@log_node_timing("mapping")
 def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Compare resume to job description and produce MappingResult.
@@ -49,6 +75,7 @@ def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     - state.mapping_result: MappingResult
     """
     logger.info("mapping_node: starting")
+    state = normalize_state(state)
     resume, job_description = _get_resume_and_jd(state)
 
     if llm is None:
@@ -57,8 +84,8 @@ def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
 
     structured_llm = llm.with_structured_output(MappingResult)
 
-    job_description_json = job_description.model_dump_json(indent=2)
-    resume_json = resume.model_dump_json(indent=2)
+    job_description_json = job_description.model_dump_json()
+    resume_json = resume.model_dump_json()
     user_message = build_mapping_prompt_user(job_description_json, resume_json)
 
     try:
@@ -77,6 +104,8 @@ def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
             "mapping_node: LLM did not return MappingResult, got %s", type(result)
         )
         raise ValueError("mapping_node: LLM must return MappingResult")
+
+    result = _validate_and_normalize_mapping_result(result)
 
     logger.info(
         "mapping_node: done score=%s matched_skills=%s matched_reqs=%s gaps=%s",

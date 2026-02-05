@@ -10,9 +10,10 @@ import logging
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from graph.utils import log_node_timing
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
 from llm.prompts import ENHANCE_SYSTEM, build_enhance_prompt_user
 from schemas.enhancement import FullEnhancementOutput
 
@@ -23,13 +24,8 @@ def _get_enhancement_inputs(
     state: ResumeEnhancerState,
 ) -> tuple[Any, Any]:
     """Extract resume and mapping_result from state."""
-    resume = state.resume if not isinstance(state, dict) else state.get("resume")
-    mapping_result = (
-        state.mapping_result
-        if not isinstance(state, dict)
-        else state.get("mapping_result")
-    )
-
+    resume = state.resume
+    mapping_result = state.mapping_result
     if resume is None:
         logger.error("enhance_node: state.resume is missing")
         raise ValueError("enhance_node requires state.resume")
@@ -40,6 +36,7 @@ def _get_enhancement_inputs(
     return resume, mapping_result
 
 
+@log_node_timing("enhance")
 def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Enhance resume sections according to the mapping_result.
@@ -53,6 +50,7 @@ def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     - state.full_enhancement_output: FullEnhancementOutput
     """
     logger.info("enhance_node: starting")
+    state = normalize_state(state)
     resume, mapping_result = _get_enhancement_inputs(state)
 
     if llm is None:
@@ -61,8 +59,8 @@ def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
 
     structured_llm = llm.with_structured_output(FullEnhancementOutput)
 
-    resume_json = resume.model_dump_json(indent=2)
-    mapping_result_json = mapping_result.model_dump_json(indent=2)
+    resume_json = resume.model_dump_json()
+    mapping_result_json = mapping_result.model_dump_json()
     user_message = build_enhance_prompt_user(
         resume_json=resume_json,
         mapping_result_json=mapping_result_json,

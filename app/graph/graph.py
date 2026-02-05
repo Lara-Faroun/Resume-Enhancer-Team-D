@@ -77,6 +77,11 @@ def run_resume_enhancer(
     The API layer is responsible for parsing the raw inputs into Resume and
     JobDescription instances, then calling this function with the compiled
     graph stored on app.state.graph.
+
+    Initial state is a dict conforming to ResumeEnhancerState (resume and
+    job_description set). LangGraph merges node outputs into this state;
+    nodes receive the current state (as dict) and should normalize via
+    normalize_state() for consistent attribute access.
     """
     initial_state: Dict[str, Any] = {
         "resume": resume,

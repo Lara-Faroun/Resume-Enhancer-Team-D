@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -13,11 +14,18 @@ from llm.service import LLMService
 # -----------------------------------------------------------------------------
 # Logging
 # -----------------------------------------------------------------------------
+LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / "resume_enhancer.log"
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[logging.StreamHandler()],
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -63,7 +71,11 @@ async def lifespan(app: FastAPI):
         
         logger.info(f"Initializing OpenAI model: {settings.OPENAI_LLM_MODEL}")
 
-        llm = ChatOpenAI(model = settings.OPENAI_LLM_MODEL, open_api_key = settings.OPENAI_API_KEY )
+        llm = ChatOpenAI(
+            model=settings.OPENAI_LLM_MODEL,
+            api_key=settings.OPENAI_API_KEY,
+            temperature=0,
+        )
         logger.info(f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}")
     
     # Expose raw LangChain LLM and the higher-level LLMService.

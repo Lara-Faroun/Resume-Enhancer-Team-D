@@ -2,8 +2,16 @@
 LangGraph state for the resume enhancer workflow.
 Raw inputs (resume_raw, job_description_text) are pre-input: parsing happens
 outside the graph. Only structured data and derived outputs live in state.
+
+State invariants (which fields are guaranteed non-null after which node):
+- At entry: resume, job_description are set by the API before invoke.
+- After mapping: mapping_result is set.
+- On enhance path after enhance: full_enhancement_output is set.
+- On enhance path after format: enhanced_resume is set.
+- On enhance path after report: report_summary may be set (or None if no reasons).
+- On feedback path: only feedback_message is set; enhanced_resume and report_summary stay unset.
 """
-from typing import Optional
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -11,6 +19,19 @@ from schemas.resume import Resume
 from schemas.job_description import JobDescription
 from schemas.mapping_result import MappingResult
 from schemas.enhancement import FullEnhancementOutput
+
+
+def normalize_state(state: Union[Dict[str, Any], "ResumeEnhancerState"]) -> "ResumeEnhancerState":
+    """
+    Ensure state is a ResumeEnhancerState instance.
+    LangGraph may pass a dict; nodes use this so they can rely on attribute access only.
+    Only keys present on ResumeEnhancerState are passed through (ignores LangGraph extras).
+    """
+    if isinstance(state, ResumeEnhancerState):
+        return state
+    allowed = set(ResumeEnhancerState.model_fields)
+    payload = {k: state[k] for k in state if k in allowed}
+    return ResumeEnhancerState(**payload)
 
 
 class ResumeEnhancerState(BaseModel):

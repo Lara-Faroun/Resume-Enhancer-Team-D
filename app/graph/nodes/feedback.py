@@ -9,10 +9,11 @@ import logging
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from graph.utils import log_node_timing
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from core.config import get_settings
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
 from llm.prompts import FEEDBACK_SYSTEM, build_feedback_prompt_user
 from schemas.mapping_result import MappingResult
 
@@ -23,12 +24,7 @@ def _get_mapping_result(state: ResumeEnhancerState) -> MappingResult:
     """
     Extract mapping_result from state, with validation.
     """
-    mapping_result = (
-        state.mapping_result
-        if not isinstance(state, dict)
-        else state.get("mapping_result")
-    )
-
+    mapping_result = state.mapping_result
     if mapping_result is None:
         logger.error("feedback_node: state.mapping_result is missing")
         raise ValueError("feedback_node requires state.mapping_result")
@@ -36,6 +32,7 @@ def _get_mapping_result(state: ResumeEnhancerState) -> MappingResult:
     return mapping_result
 
 
+@log_node_timing("feedback")
 def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Low-score feedback path.
@@ -51,6 +48,7 @@ def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, A
     report_summary remain unset.
     """
     logger.info("feedback_node: starting")
+    state = normalize_state(state)
     try:
         mapping_result = _get_mapping_result(state)
 
@@ -60,7 +58,7 @@ def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, A
 
         score = mapping_result.match_score
         threshold = get_settings().SCORE_THRESHOLD
-        mapping_result_json = mapping_result.model_dump_json(indent=2)
+        mapping_result_json = mapping_result.model_dump_json()
         user_message = build_feedback_prompt_user(
             mapping_result_json=mapping_result_json,
             score=score,

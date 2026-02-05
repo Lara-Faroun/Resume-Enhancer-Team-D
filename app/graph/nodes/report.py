@@ -7,9 +7,10 @@ import logging
 from typing import Any, List
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from graph.utils import log_node_timing
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
 from llm.prompts import FEEDBACK_REPORT_SYSTEM, build_report_prompt_user
 from schemas.enhancement import FullEnhancementOutput, ChangeReason
 
@@ -20,12 +21,7 @@ def _get_full_output(state: ResumeEnhancerState) -> FullEnhancementOutput:
     """
     Extract full_enhancement_output from state, with validation.
     """
-    full_output = (
-        state.full_enhancement_output
-        if not isinstance(state, dict)
-        else state.get("full_enhancement_output")
-    )
-
+    full_output = state.full_enhancement_output
     if full_output is None:
         logger.error("report_node: state.full_enhancement_output is missing")
         raise ValueError("report_node requires state.full_enhancement_output")
@@ -80,6 +76,7 @@ def _reasons_to_text(reasons: List[ChangeReason]) -> str:
     return "\n".join(lines)
 
 
+@log_node_timing("report")
 def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Collect change reasons from FullEnhancementOutput, ask the LLM to
@@ -93,6 +90,7 @@ def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any
     - state.report_summary: str (LLM-generated summary)
     """
     logger.info("report_node: starting")
+    state = normalize_state(state)
     try:
         full_output = _get_full_output(state)
         reasons = _collect_reasons(full_output)

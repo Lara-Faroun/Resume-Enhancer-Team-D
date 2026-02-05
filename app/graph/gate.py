@@ -8,7 +8,7 @@ This is used by the LangGraph workflow to decide whether to:
 import logging
 
 from core.config import get_settings
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,8 @@ def route_after_mapping(state: ResumeEnhancerState) -> str:
         "feedback" if mapping_result.match_score < SCORE_THRESHOLD
         "enhance"  otherwise
     """
-    mapping_result = (
-        state.get("mapping_result") if isinstance(state, dict) else state.mapping_result
-    )
+    state = normalize_state(state)
+    mapping_result = state.mapping_result
     if mapping_result is None:
         logger.error("route_after_mapping: mapping_result is missing")
         raise ValueError("route_after_mapping requires state.mapping_result")

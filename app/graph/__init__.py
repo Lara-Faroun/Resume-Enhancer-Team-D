@@ -1,3 +1,3 @@
-from .state import ResumeEnhancerState
+from .state import ResumeEnhancerState, normalize_state
 
-__all__ = ["ResumeEnhancerState"]
+__all__ = ["ResumeEnhancerState", "normalize_state"]

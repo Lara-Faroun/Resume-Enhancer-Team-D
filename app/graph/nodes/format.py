@@ -8,7 +8,8 @@ respects the CV schema as the single source of truth.
 import logging
 from typing import Any
 
-from graph.state import ResumeEnhancerState
+from graph.state import ResumeEnhancerState, normalize_state
+from graph.utils import log_node_timing
 from schemas.resume import Resume
 from schemas.enhancement import FullEnhancementOutput
 
@@ -21,14 +22,8 @@ def _get_format_inputs(
     """
     Extract resume and full_enhancement_output from state, with validation.
     """
-    # Support both dict-like and Pydantic state just in case
-    resume = state.resume if not isinstance(state, dict) else state.get("resume")
-    full_output = (
-        state.full_enhancement_output
-        if not isinstance(state, dict)
-        else state.get("full_enhancement_output")
-    )
-
+    resume = state.resume
+    full_output = state.full_enhancement_output
     if resume is None:
         logger.error("format_node: state.resume is missing")
         raise ValueError("format_node requires state.resume")
@@ -107,6 +102,7 @@ def _build_enhanced_resume(
     return enhanced_resume
 
 
+@log_node_timing("format")
 def format_node(state: ResumeEnhancerState) -> dict[str, Any]:
     """
     Build the final enhanced resume from the original resume and
@@ -120,6 +116,7 @@ def format_node(state: ResumeEnhancerState) -> dict[str, Any]:
     - state.enhanced_resume: Resume
     """
     logger.info("format_node: starting")
+    state = normalize_state(state)
     try:
         resume, full_output = _get_format_inputs(state)
         enhanced_resume = _build_enhanced_resume(resume, full_output)

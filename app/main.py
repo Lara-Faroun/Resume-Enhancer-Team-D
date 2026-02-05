@@ -109,10 +109,11 @@ app.add_middleware(
 # Routers (add as you implement them)
 # -----------------------------------------------------------------------------
 from routers.enhance import router as enhance_router
+from routers.parse import router as parse_router
 from routers.export import router as export_router
 
-
 app.include_router(enhance_router, prefix="/api/v1", tags=["enhance"])
+app.include_router(parse_router, prefix="/api/v1", tags=["parse"])
 app.include_router(export_router, prefix="/api/v1", tags=["export"])
 # -----------------------------------------------------------------------------
 # Global endpoints

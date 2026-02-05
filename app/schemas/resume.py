@@ -1,12 +1,12 @@
 from typing import List
 from pydantic import BaseModel, Field
-from app.schemas.personal_info import PersonalInfo
-from app.schemas.education import Education
-from app.schemas.experience import Experience
-from app.schemas.skill import Skill
-from app.schemas.certification import Certification
-from app.schemas.language import Language
-from app.schemas.project import Project
+from .personal_info import PersonalInfo
+from .education import Education
+from .experience import Experience
+from .skill import Skill
+from .certification import Certification
+from .language import Language
+from .project import Project
 
 
 class Resume(BaseModel):

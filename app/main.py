@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import get_settings
 from graph.graph import build_graph
+from llm.service import LLMService
 
 # -----------------------------------------------------------------------------
 # Logging
@@ -65,7 +66,9 @@ async def lifespan(app: FastAPI):
         llm = ChatOpenAI(model = settings.OPENAI_LLM_MODEL, open_api_key = settings.OPENAI_API_KEY )
         logger.info(f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}")
     
+    # Expose raw LangChain LLM and the higher-level LLMService.
     app.state.llm = llm
+    app.state.llm_service = LLMService(llm)
 
     # Compile LangGraph once per app instance, reusing the shared LLM.
     try:

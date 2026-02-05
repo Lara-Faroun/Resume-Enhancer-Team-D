@@ -1,6 +1,12 @@
 import asyncio
-from app.core.parsing.job_parser import parse_job_description
 import json
+
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+from core.config import get_settings
+from core.parsing.job_parser import parse_job_description
+from llm.service import LLMService
 
 
 job_text_example = """
@@ -62,10 +68,44 @@ WhatsApp.com (https://wa.me/962782179968)
 
 
 
+def _create_llm_service_for_test() -> LLMService:
+    """
+    Create an LLMService instance for local testing, mirroring main.py logic.
+    """
+    settings = get_settings()
+
+    llm = None
+    if settings.GOOGLE_API_KEY:
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model=settings.GEMINI_LLM_MODEL,
+                google_api_key=settings.GOOGLE_API_KEY,
+                temperature=0,
+                convert_system_message_to_human=True,
+            )
+        except Exception:
+            llm = None
+
+    if llm is None and settings.OPENAI_API_KEY:
+        llm = ChatOpenAI(
+            model=settings.OPENAI_LLM_MODEL,
+            open_api_key=settings.OPENAI_API_KEY,
+        )
+
+    if llm is None:
+        raise RuntimeError(
+            "Failed to create LLM for test: configure GOOGLE_API_KEY or OPENAI_API_KEY"
+        )
+
+    return LLMService(llm)
+
+
 async def main():
     print("🚀 Job parser test started")
 
-    job_data = await parse_job_description(job_text_example)
+    llm_service = _create_llm_service_for_test()
+
+    job_data = await parse_job_description(job_text_example, llm_service)
 
     print("✅ Parsed Job Description:")
     print(job_data.model_dump())

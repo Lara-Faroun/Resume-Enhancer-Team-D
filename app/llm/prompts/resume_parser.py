@@ -68,7 +68,7 @@ Schema (must match exactly):
   "languages": [
     {{
       "language": "string",
-      "proficiency_level": "A1|A2|B1|B2|C1|C2"
+      "proficiency_level": "A1|A2|B1|B2|C1|C2|Native"
     }}
   ],
 

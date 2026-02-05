@@ -3,7 +3,7 @@ import os
 import shutil
 import tempfile
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, status
 from pydantic import BaseModel
 
 from core.parsing.text_extractor import extract_text_from_file
@@ -25,6 +25,7 @@ class ParseResponse(BaseModel):
 
 @router.post("/parse", response_model=ParseResponse)
 async def parse_resume_and_job(
+    request: Request,
     file: UploadFile = File(...),
     job_description: str = Form(...),
 ) -> Dict[str, Any]:
@@ -37,6 +38,12 @@ async def parse_resume_and_job(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported file type. Only .pdf and .docx are allowed.",
+        )
+    llm_service = getattr(request.app.state, "llm_service", None)
+    if llm_service is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="LLM service not initialized. Please try check the configuration.",
         )
 
     # Save uploaded file to a temporary location
@@ -55,10 +62,10 @@ async def parse_resume_and_job(
         resume_text = extract_text_from_file(tmp_path)
 
         # 2) Parse resume text to structured Resume (LLM)
-        resume_obj = await parse_resume(resume_text)
+        resume_obj = await parse_resume(resume_text, llm_service)
 
         # 3) Parse job description text to structured JobDescription (LLM)
-        job_obj = await parse_job_description(job_description)
+        job_obj = await parse_job_description(job_description, llm_service)
 
         return ParseResponse(resume=resume_obj, job_description=job_obj)
     finally:

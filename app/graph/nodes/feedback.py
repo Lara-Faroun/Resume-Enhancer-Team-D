@@ -33,7 +33,7 @@ def _get_mapping_result(state: ResumeEnhancerState) -> MappingResult:
 
 
 @log_node_timing("feedback")
-def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
+async def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Low-score feedback path.
 
@@ -65,7 +65,7 @@ def feedback_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, A
             threshold=threshold,
         )
 
-        result = llm.invoke(
+        result = await llm.ainvoke(
             [
                 SystemMessage(content=FEEDBACK_SYSTEM),
                 HumanMessage(content=user_message),

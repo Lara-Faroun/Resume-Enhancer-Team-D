@@ -77,7 +77,7 @@ def _reasons_to_text(reasons: List[ChangeReason]) -> str:
 
 
 @log_node_timing("report")
-def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
+async def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Collect change reasons from FullEnhancementOutput, ask the LLM to
     summarize them, and store only the summary in state.report_summary.
@@ -105,7 +105,7 @@ def report_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any
         try:
             change_reasons_text = _reasons_to_text(reasons)
             user_message = build_report_prompt_user(change_reasons_text)
-            result = llm.invoke(
+            result = await llm.ainvoke(
                 [
                     SystemMessage(content=FEEDBACK_REPORT_SYSTEM),
                     HumanMessage(content=user_message),

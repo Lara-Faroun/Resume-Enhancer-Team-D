@@ -37,7 +37,7 @@ def _get_enhancement_inputs(
 
 
 @log_node_timing("enhance")
-def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
+async def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Enhance resume sections according to the mapping_result.
 
@@ -67,7 +67,7 @@ def enhance_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     )
 
     try:
-        result = structured_llm.invoke(
+        result = await structured_llm.ainvoke(
             [
                 SystemMessage(content=ENHANCE_SYSTEM),
                 HumanMessage(content=user_message),

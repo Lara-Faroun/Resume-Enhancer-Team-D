@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
-from graph.graph import run_resume_enhancer
+from graph.graph import run_resume_enhancer_async
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def _state_to_jsonable(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/enhance", response_model=None)
-def enhance(request: Request, body: EnhanceRequest):
+async def enhance(request: Request, body: EnhanceRequest):
     """
     Run the LangGraph workflow with the given Resume and JobDescription.
 
@@ -67,7 +67,11 @@ def enhance(request: Request, body: EnhanceRequest):
     logger.info("enhance: invoking graph with provided resume and job_description")
 
     try:
-        state = run_resume_enhancer(graph, body.resume, body.job_description)
+        state = await run_resume_enhancer_async(
+            graph,
+            body.resume,
+            body.job_description,
+        )
     except Exception as exc:
         # Log full stack trace for operators; return safe message to client.
         logger.exception("enhance: graph invocation failed: %s", exc)

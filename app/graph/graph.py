@@ -10,6 +10,7 @@ This module builds a StateGraph with the following flow:
 - format is pure Python; report uses the shared LLM to summarize changes.
 """
 from typing import Any, Dict
+import asyncio
 
 from langgraph.graph import END, StateGraph
 
@@ -36,12 +37,24 @@ def build_graph(llm: Any):
     graph = StateGraph(ResumeEnhancerState)
 
     # Nodes that require LLM are wrapped to accept only `state`.
-    graph.add_node("mapping", lambda state: mapping_node(state, llm))
-    graph.add_node("enhance", lambda state: enhance_node(state, llm))
-    graph.add_node("feedback", lambda state: feedback_node(state, llm))
+    async def mapping_with_llm(state):
+        return await mapping_node(state, llm)
+
+    async def enhance_with_llm(state):
+        return await enhance_node(state, llm)
+
+    async def feedback_with_llm(state):
+        return await feedback_node(state, llm)
+
+    async def report_with_llm(state):
+        return await report_node(state, llm)
+
+    graph.add_node("mapping", mapping_with_llm)
+    graph.add_node("enhance", enhance_with_llm)
+    graph.add_node("feedback", feedback_with_llm)
 
     graph.add_node("format", format_node)
-    graph.add_node("report", lambda state: report_node(state, llm))
+    graph.add_node("report", report_with_llm)
 
     # Entry point
     graph.set_entry_point("mapping")
@@ -68,11 +81,11 @@ def build_graph(llm: Any):
     return graph.compile()
 
 
-def run_resume_enhancer(
+async def run_resume_enhancer_async(
     graph, resume: Resume, job_description: JobDescription
 ) -> Dict[str, Any]:
     """
-    Entry helper for running the compiled graph.
+    Async entry helper for running the compiled graph.
 
     The API layer is responsible for parsing the raw inputs into Resume and
     JobDescription instances, then calling this function with the compiled
@@ -87,5 +100,16 @@ def run_resume_enhancer(
         "resume": resume,
         "job_description": job_description,
     }
-    return graph.invoke(initial_state)
+    return await graph.ainvoke(initial_state)
+
+
+def run_resume_enhancer(
+    graph, resume: Resume, job_description: JobDescription
+) -> Dict[str, Any]:
+    """
+    Sync helper retained for tests and backward compatibility.
+
+    Internally runs the async graph entry point.
+    """
+    return asyncio.run(run_resume_enhancer_async(graph, resume, job_description))
 

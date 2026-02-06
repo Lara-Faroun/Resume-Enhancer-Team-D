@@ -62,7 +62,7 @@ def _get_resume_and_jd(state: ResumeEnhancerState) -> tuple[Resume, JobDescripti
 
 
 @log_node_timing("mapping")
-def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
+async def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, Any]:
     """
     Compare resume to job description and produce MappingResult.
 
@@ -89,7 +89,7 @@ def mapping_node(state: ResumeEnhancerState, llm: BaseChatModel) -> dict[str, An
     user_message = build_mapping_prompt_user(job_description_json, resume_json)
 
     try:
-        result = structured_llm.invoke(
+        result = await structured_llm.ainvoke(
             [
                 SystemMessage(content=MAP_RESUME_JD_SYSTEM),
                 HumanMessage(content=user_message),

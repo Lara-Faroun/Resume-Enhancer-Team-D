@@ -74,6 +74,8 @@ async def lifespan(app: FastAPI):
         llm = ChatOpenAI(
             model=settings.OPENAI_LLM_MODEL,
             api_key=settings.OPENAI_API_KEY,
+            openai_api_base="https://openrouter.ai/api/v1",
+
             temperature=0,
         )
         logger.info(f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}")

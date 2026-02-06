@@ -11,7 +11,7 @@ from typing import Any
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.core.config import get_settings
+from core.config import get_settings
 from graph.state import ResumeEnhancerState
 from llm.prompts import FEEDBACK_SYSTEM, build_feedback_prompt_user
 from schemas.mapping_result import MappingResult

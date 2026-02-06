@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LangGraph Runner — Chat-like Streaming</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f172a;
+      --panel2:#111c33;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --border:#22304a;
+      --accent:#60a5fa;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --err:#ef4444;
+      --chip:#162340;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:linear-gradient(180deg, #070a11, var(--bg));
+      color:var(--text);
+      font-family:var(--sans);
+    }
+    header{
+      padding:18px 22px;
+      border-bottom:1px solid var(--border);
+      background:rgba(15,23,42,.65);
+      backdrop-filter: blur(10px);
+      position:sticky; top:0; z-index:10;
+    }
+    header h1{
+      margin:0;
+      font-size:18px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    header p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:16px;
+      padding:16px;
+      max-width:1400px;
+      margin:0 auto;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(15,23,42,.85), rgba(15,23,42,.65));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .card-hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .card-hd .title{
+      font-weight:650;
+      font-size:14px;
+    }
+    .card .card-hd .sub{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .card .card-bd{
+      padding:14px 16px;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    input[type="text"], textarea{
+      width:100%;
+      background:rgba(2,6,23,.55);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+    }
+    textarea{
+      min-height:240px;
+      resize:vertical;
+      font-family:var(--mono);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .row{ display:flex; gap:10px; }
+    .row > * { flex:1; }
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(96,165,250,.10);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:13px;
+    }
+    .btn:hover{ border-color: rgba(96,165,250,.55); }
+    .btn.primary{ background:rgba(96,165,250,.18); border-color: rgba(96,165,250,.35); }
+    .btn.danger{ background:rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); }
+    .btn.ghost{ background:transparent; }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.40);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .chip strong{ color:var(--text); font-weight:650; }
+    .slider{
+      display:flex; align-items:center; gap:10px;
+    }
+    .slider input{ width:180px; }
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    /* Output */
+    .status{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.40);
+      color:var(--muted);
+    }
+    .pill.ok{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color:#bbf7d0; }
+    .pill.warn{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); color:#fde68a; }
+    .pill.err{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color:#fecaca; }
+
+    .chat{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding-bottom:6px;
+      max-height: 72vh;
+      overflow:auto;
+      scroll-behavior:smooth;
+    }
+    .msg{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(17,28,51,.78), rgba(17,28,51,.55));
+      border-radius:18px;
+      padding:12px 14px;
+    }
+    .msg .msg-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .msg .msg-hd .name{
+      font-weight:700;
+      font-size:13px;
+      letter-spacing:.2px;
+    }
+    .msg .msg-hd .meta{
+      color:var(--muted);
+      font-size:12px;
+      font-family:var(--mono);
+    }
+    .msg .msg-bd{
+      white-space:pre-wrap;
+      line-height:1.55;
+      font-size:13px;
+      color:var(--text);
+    }
+    .msg.typing{
+      border-color: rgba(96,165,250,.35);
+      box-shadow: 0 0 0 3px rgba(96,165,250,.08);
+    }
+
+    details{
+      margin-top:10px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(2,6,23,.35);
+    }
+    summary{
+      cursor:pointer;
+      color:var(--muted);
+      font-weight:650;
+      font-size:13px;
+    }
+    pre{
+      margin:10px 0 0;
+      background:rgba(0,0,0,.25);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+      overflow:auto;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--text);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LangGraph Runner — Streaming UI (Chat-like)</h1>
+    <p>يعرض الأقسام تدريجياً مثل ردود الشات: Summary → Experiences → ... مع typewriter لكل قسم.</p>
+  </header>
+
+  <div class="wrap">
+    <!-- Left: Request -->
+    <section class="card">
+      <div class="card-hd">
+        <div>
+          <div class="title">Request</div>
+          <div class="sub">JSON + endpoint + controls</div>
+        </div>
+        <span class="chip"><strong>Mode</strong> incremental (SSE)</span>
+      </div>
+
+      <div class="card-bd">
+        <label>Endpoint</label>
+        <input id="endpoint" type="text" value="http://localhost:8000/api/v1/enhance" />
+
+        <div class="row" style="margin-top:12px;">
+          <div>
+            <label>Typewriter speed (ms / word step)</label>
+            <div class="slider">
+              <input id="twSpeed" type="range" min="5" max="80" value="22" />
+              <span class="chip"><strong id="twSpeedVal">22</strong> ms</span>
+            </div>
+          </div>
+          <div>
+            <label>UI refresh (ms)</label>
+            <div class="slider">
+              <input id="uiRefresh" type="range" min="30" max="250" value="90" step="5" />
+              <span class="chip"><strong id="uiRefreshVal">90</strong> ms</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn primary" id="runBtn">Run</button>
+          <button class="btn ghost" id="stopBtn">Stop</button>
+          <button class="btn danger" id="clearBtn">Clear</button>
+        </div>
+
+        <div class="hint">
+          ملاحظة: لتفادي <b>422</b>، نحن نرسل <b>mode</b> فقط بالـ query: <code>?mode=incremental</code> وليس داخل الـ body.
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Resume JSON</label>
+          <textarea id="resumeJson"></textarea>
+        </div>
+
+        <div style="margin-top:12px;">
+          <label>Job Description JSON</label>
+          <textarea id="jobJson"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Output -->
+    <section class="card">
+      <div class="card-hd">
+        <div>
+          <div class="title">Output</div>
+          <div class="sub">Chat-like incremental rendering</div>
+        </div>
+        <span class="chip"><strong id="connState">Idle</strong></span>
+      </div>
+
+      <div class="card-bd">
+        <div class="status">
+          <span class="pill" id="statusPill">Idle</span>
+          <span class="pill" id="progressPill">0%</span>
+          <span class="pill" id="sectionPill">—</span>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <details>
+          <summary>Debug (events / last payload / final state)</summary>
+          <pre id="debugBox">{}</pre>
+        </details>
+      </div>
+    </section>
+  </div>
+
+<script>
+  // ============================================================================
+  // Defaults
+  // ============================================================================
+  const resumeDefault = {
+    personal_info: {
+      full_name: "Nour Mansour",
+      phone_number: "+33-6-12-34-56-78",
+      email_address: "nour@example.com",
+      linkedin: "https://www.linkedin.com/in/nour-mansour",
+      personal_website: "https://github.com/nourm"
+    },
+    summary: "Software engineer focused on AI workflow orchestration and scalable backend services.",
+    educations: [],
+    experiences: [],
+    skills: [
+      { skill_name: "Python", skill_type: "technical" },
+      { skill_name: "FastAPI", skill_type: "technical" },
+      { skill_name: "Communication", skill_type: "soft" }
+    ],
+    certifications: [],
+    languages: [{ language: "English", proficiency_level: "C1" }],
+    projects: []
+  };
+
+  const jobDefault = {
+    job_title: "Backend Software Engineer",
+    company_name: "Innovative Tech GmbH",
+    responsibilities: ["Develop and maintain RESTful APIs", "Collaborate with cross-functional teams"],
+    requirements: [
+      "Strong experience with Python",
+      "Experience building APIs using FastAPI or similar frameworks",
+      "Basic knowledge of relational databases"
+    ],
+    required_skills: ["Python", "FastAPI", "SQL"],
+    preferred_skills: ["Docker", "Cloud platforms (AWS or GCP)"],
+    seniority_level: "mid",
+    soft_skills: ["Communication", "Teamwork", "Problem Solving"]
+  };
+
+  // ============================================================================
+  // UI refs
+  // ============================================================================
+  const endpointEl = document.getElementById("endpoint");
+  const runBtn = document.getElementById("runBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const clearBtn = document.getElementById("clearBtn");
+
+  const resumeEl = document.getElementById("resumeJson");
+  const jobEl = document.getElementById("jobJson");
+
+  const chatEl = document.getElementById("chat");
+  const debugBox = document.getElementById("debugBox");
+
+  const statusPill = document.getElementById("statusPill");
+  const progressPill = document.getElementById("progressPill");
+  const sectionPill = document.getElementById("sectionPill");
+  const connState = document.getElementById("connState");
+
+  const twSpeed = document.getElementById("twSpeed");
+  const twSpeedVal = document.getElementById("twSpeedVal");
+  const uiRefresh = document.getElementById("uiRefresh");
+  const uiRefreshVal = document.getElementById("uiRefreshVal");
+
+  resumeEl.value = JSON.stringify(resumeDefault, null, 2);
+  jobEl.value = JSON.stringify(jobDefault, null, 2);
+
+  twSpeed.addEventListener("input", () => twSpeedVal.textContent = twSpeed.value);
+  uiRefresh.addEventListener("input", () => uiRefreshVal.textContent = uiRefresh.value);
+
+  // ============================================================================
+  // State
+  // ============================================================================
+  let controller = null;
+  let running = false;
+
+  // queue of sections to type
+  const sectionQueue = [];
+  // map section -> {el, fullText, typedText, done}
+  const sections = new Map();
+
+  const SECTION_ORDER = [
+    "summary","experiences","educations","skills","certifications","languages","projects","report_summary"
+  ];
+  const SECTION_TITLES = {
+    summary: "Summary",
+    experiences: "Experiences",
+    educations: "Educations",
+    skills: "Skills",
+    certifications: "Certifications",
+    languages: "Languages",
+    projects: "Projects",
+    report_summary: "Report Summary"
+  };
+
+  // event/debug
+  const recentEvents = [];
+  let lastPartial = null;
+  let finalState = null;
+
+  // typewriter
+  let twActive = false;
+  let twSection = "";
+  let twWords = [];
+  let twIndex = 0;
+  let lastTwTick = 0;
+
+  // ============================================================================
+  // Helpers
+  // ============================================================================
+  function setPill(el, text, cls){
+    el.className = "pill" + (cls ? " " + cls : "");
+    el.textContent = text;
+  }
+
+  function normalizeToText(x){
+    if (x == null) return "";
+    if (typeof x === "string") return x.trim();
+    if (Array.isArray(x)){
+      const lines = x.map(normalizeToText).filter(Boolean);
+      if (!lines.length) return "";
+      const allBulleted = lines.every(l => l.trim().startsWith("-") || l.trim().startsWith("•"));
+      return (allBulleted ? lines : lines.map(l => "- " + l)).join("\n").trim();
+    }
+    if (typeof x === "object"){
+      for (const k of ["enhanced","text","content","summary"]){
+        if (k in x) return normalizeToText(x[k]);
+      }
+      try { return JSON.stringify(x, null, 2); } catch { return String(x); }
+    }
+    return String(x).trim();
+  }
+
+  function addEvent(ev){
+    recentEvents.push(ev);
+    while (recentEvents.length > 30) recentEvents.shift();
+  }
+
+  function updateDebug(){
+    debugBox.textContent = JSON.stringify({
+      last_events: recentEvents.slice(-12),
+      last_partial: lastPartial,
+      final_state: finalState
+    }, null, 2);
+  }
+
+  function ensureSectionMsg(section){
+    if (sections.has(section)) return sections.get(section);
+
+    const msg = document.createElement("div");
+    msg.className = "msg";
+    msg.dataset.section = section;
+
+    const hd = document.createElement("div");
+    hd.className = "msg-hd";
+
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = SECTION_TITLES[section] || section;
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = "";
+
+    hd.appendChild(name);
+    hd.appendChild(meta);
+
+    const bd = document.createElement("div");
+    bd.className = "msg-bd";
+    bd.textContent = "";
+
+    msg.appendChild(hd);
+    msg.appendChild(bd);
+    chatEl.appendChild(msg);
+
+    const obj = { el: msg, hd, bd, meta, fullText:"", typedText:"", done:false };
+    sections.set(section, obj);
+
+    // keep order (if backend sends out-of-order)
+    reorderChatBySectionOrder();
+    scrollChatToBottom();
+
+    return obj;
+  }
+
+  function reorderChatBySectionOrder(){
+    // Sort existing message elements by SECTION_ORDER. Unknown at end.
+    const items = Array.from(chatEl.querySelectorAll(".msg"));
+    items.sort((a,b) => {
+      const sa = a.dataset.section;
+      const sb = b.dataset.section;
+      const ia = SECTION_ORDER.indexOf(sa);
+      const ib = SECTION_ORDER.indexOf(sb);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+    for (const it of items) chatEl.appendChild(it);
+  }
+
+  function scrollChatToBottom(){
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function enqueueSection(section, text){
+    const t = normalizeToText(text);
+    if (!t) return;
+
+    const s = ensureSectionMsg(section);
+    s.fullText = t;
+
+    // Avoid enqueue duplicates if already done or already queued
+    const alreadyQueued = sectionQueue.some(x => x.section === section);
+    if (!s.done && !alreadyQueued){
+      sectionQueue.push({ section, text: t });
+    }
+  }
+
+  function startTypewriter(section, text){
+    const s = ensureSectionMsg(section);
+    s.el.classList.add("typing");
+    twActive = true;
+    twSection = section;
+    twWords = String(text || "").split(/\s+/).filter(Boolean);
+    twIndex = 0;
+    lastTwTick = performance.now();
+    sectionPill.textContent = SECTION_TITLES[section] || section;
+  }
+
+  function stepTypewriter(){
+    if (!twActive) return;
+
+    const now = performance.now();
+    const speedMs = Number(twSpeed.value);
+
+    if ((now - lastTwTick) < speedMs) return;
+    lastTwTick = now;
+
+    const step = 2; // words per tick
+    twIndex = Math.min(twWords.length, twIndex + step);
+
+    const typed = twWords.slice(0, twIndex).join(" ");
+    const s = sections.get(twSection);
+    if (s){
+      s.bd.textContent = typed;
+      scrollChatToBottom();
+    }
+
+    if (twIndex >= twWords.length){
+      // complete
+      if (s){
+        s.done = true;
+        s.el.classList.remove("typing");
+      }
+      twActive = false;
+      twSection = "";
+      twWords = [];
+      twIndex = 0;
+    }
+  }
+
+  function typewriterLoop(){
+    // Start next section if idle
+    if (!twActive && sectionQueue.length){
+      const next = sectionQueue.shift();
+      startTypewriter(next.section, next.text);
+    }
+    stepTypewriter();
+
+    // UI loop while running OR still typing or queued
+    if (running || twActive || sectionQueue.length){
+      setTimeout(typewriterLoop, Number(uiRefresh.value));
+    }
+  }
+
+  function clearOutput(){
+    chatEl.innerHTML = "";
+    sections.clear();
+    sectionQueue.length = 0;
+    recentEvents.length = 0;
+    lastPartial = null;
+    finalState = null;
+    twActive = false;
+    twSection = "";
+    twWords = [];
+    twIndex = 0;
+    updateDebug();
+    setPill(statusPill, "Idle", "");
+    setPill(progressPill, "0%", "");
+    sectionPill.textContent = "—";
+    connState.textContent = "Idle";
+  }
+
+  function stopRun(){
+    if (controller){
+      controller.abort();
+      controller = null;
+    }
+    running = false;
+    connState.textContent = "Stopped";
+    setPill(statusPill, "Stopped", "warn");
+  }
+
+  // ============================================================================
+  // SSE (POST) via fetch streaming
+  // ============================================================================
+  async function runIncremental(){
+    // parse JSON
+    let resume, job;
+    try{
+      resume = JSON.parse(resumeEl.value);
+    }catch(e){
+      alert("Resume JSON invalid: " + e.message);
+      return;
+    }
+    try{
+      job = JSON.parse(jobEl.value);
+    }catch(e){
+      alert("Job Description JSON invalid: " + e.message);
+      return;
+    }
+
+    // reset output for new run
+    clearOutput();
+
+    const base = endpointEl.value.trim().replace(/\/+$/,"");
+    const url = base + "?mode=incremental"; // ✅ mode only in query
+
+    const body = { resume, job_description: job }; // ✅ no mode in body
+
+    controller = new AbortController();
+    running = true;
+    connState.textContent = "Connecting…";
+    setPill(statusPill, "Running", "");
+    setPill(progressPill, "0%", "");
+    sectionPill.textContent = "—";
+
+    // start UI loop immediately
+    typewriterLoop();
+
+    try{
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream"
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+
+      if (!resp.ok){
+        const text = await resp.text();
+        connState.textContent = "HTTP " + resp.status;
+        setPill(statusPill, "Error (HTTP " + resp.status + ")", "err");
+        addEvent({ event_type:"http_error", status: resp.status, body: text.slice(0,200) });
+        updateDebug();
+        running = false;
+        return;
+      }
+
+      connState.textContent = "Streaming…";
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while(true){
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream:true });
+
+        // SSE blocks separated by \n\n
+        let idx;
+        while ((idx = buffer.indexOf("\n\n")) !== -1){
+          const block = buffer.slice(0, idx).trim();
+          buffer = buffer.slice(idx + 2);
+
+          if (!block) continue;
+
+          // collect data lines
+          const lines = block.split("\n");
+          const dataLines = lines
+            .map(l => l.trim())
+            .filter(l => l.startsWith("data:"))
+            .map(l => l.slice(5).trim());
+
+          if (!dataLines.length) continue;
+
+          const dataStr = dataLines.join("\n");
+          let ev;
+          try { ev = JSON.parse(dataStr); }
+          catch { ev = { event_type:"raw", data: dataStr }; }
+
+          // handle event
+          handleEvent(ev);
+        }
+      }
+
+      // stream ended
+      running = false;
+      connState.textContent = "Finished";
+      // done is when typing/queue ends; pill will update later
+
+    }catch(err){
+      running = false;
+      if (err.name === "AbortError"){
+        connState.textContent = "Stopped";
+        setPill(statusPill, "Stopped", "warn");
+      }else{
+        connState.textContent = "Error";
+        setPill(statusPill, "Error", "err");
+        addEvent({ event_type:"exception", message: String(err) });
+        updateDebug();
+      }
+    }
+  }
+
+  function handleEvent(ev){
+    addEvent(ev);
+
+    const et = ev.event_type || "unknown";
+
+    if (typeof ev.progress_percent === "number"){
+      setPill(progressPill, ev.progress_percent.toFixed(1) + "%", "");
+    }
+
+    if (et === "error"){
+      const msg = ev.error_message || "Unknown error";
+      setPill(statusPill, "Error", "err");
+      connState.textContent = "Error";
+      updateDebug();
+      // stop network stream
+      stopRun();
+      return;
+    }
+
+    if (et === "section_start"){
+      const sec = ev.section || "";
+      sectionPill.textContent = SECTION_TITLES[sec] || sec || "—";
+      setPill(statusPill, "Running", "");
+    }
+
+    if (et === "section_complete"){
+      const sec = ev.section || "";
+      lastPartial = ev.partial_payload || null;
+
+      // Extract enhanced text (robust)
+      let enhanced = "";
+      const p = ev.partial_payload || {};
+      if (p && typeof p === "object"){
+        if (p[sec] && typeof p[sec] === "object"){
+          enhanced = normalizeToText(p[sec].enhanced);
+        }else if ("enhanced" in p){
+          enhanced = normalizeToText(p.enhanced);
+        }
+      }
+
+      if (sec && enhanced){
+        enqueueSection(sec, enhanced);
+      }
+
+      updateDebug();
+    }
+
+    if (et === "complete"){
+      finalState = ev.state || null;
+      updateDebug();
+      // show "Done" only after typing ends
+      setTimeout(() => {
+        if (!running){
+          // will be finalized by typewriter loop
+        }
+      }, 0);
+    }
+
+    // Update status pills
+    if (running){
+      setPill(statusPill, "Running", "");
+    }else{
+      // not running; done when no typing/queue
+      if (!twActive && sectionQueue.length === 0){
+        setPill(statusPill, "Done", "ok");
+      }
+    }
+  }
+
+  // ============================================================================
+  // Buttons
+  // ============================================================================
+  runBtn.addEventListener("click", runIncremental);
+  stopBtn.addEventListener("click", stopRun);
+  clearBtn.addEventListener("click", clearOutput);
+
+  // finalize "Done" when typing completes
+  setInterval(() => {
+    if (!running && !twActive && sectionQueue.length === 0){
+      if (statusPill.textContent !== "Done" && statusPill.textContent !== "Idle"){
+        setPill(statusPill, "Done", "ok");
+      }
+    }
+  }, 250);
+
+  // initial
+  clearOutput();
+</script>
+</body>
+</html>

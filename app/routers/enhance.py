@@ -2,7 +2,8 @@
 Enhance API: run the resume enhancer graph with Resume + JobDescription schemas.
 
 For testing: POST JSON body with resume and job_description; returns final state.
-Supports both legacy mode (single response) and incremental mode (SSE streaming).
+Supports legacy mode (single response), incremental mode (real-time SSE streaming),
+and sectional mode (per-section with fallbacks).
 """
 import logging
 import asyncio
@@ -16,7 +17,12 @@ from pydantic import BaseModel, Field
 
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
+from schemas.enhancement import FullEnhancementOutput
 from graph.graph import run_resume_enhancer
+from graph.nodes.enhance_streaming import stream_all_sections
+from graph.nodes.mapping import mapping_node
+from graph.nodes.format import format_node
+from graph.nodes.report import report_node
 
 logger = logging.getLogger(__name__)
 
@@ -129,46 +135,140 @@ def _run_sectional_mode(graph, resume: "Resume", job_description: "JobDescriptio
 
 async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
     """
-    Stream enhancement progress via Server-Sent Events (SSE).
+    Stream enhancement progress via Server-Sent Events (SSE) with real-time token streaming.
+    
+    This provides a chat-like experience where text appears as it's generated:
+    - section_start: Section processing begins
+    - section_delta: Partial text chunks (every 200-500ms)
+    - section_complete: Section finished with final aggregated text
+    - complete: All processing done with final state
     
     Yields:
         SSE-formatted events (data: {json}\n\n)
     """
-    graph = getattr(request.app.state, "graph", None)
-    if graph is None:
-        logger.error("enhance_incremental_stream: app.state.graph not set")
-        yield f"data: {json.dumps({'event_type': 'error', 'error_message': 'Graph not initialized'})}\n\n"
+    llm = getattr(request.app.state, "llm", None)
+    if llm is None:
+        logger.error("enhance_incremental_stream: app.state.llm not set")
+        yield f"data: {json.dumps({'event_type': 'error', 'error_message': 'LLM not initialized'})}\n\n"
         return
     
-    logger.info("enhance_incremental_stream: starting")
-    
-    # Prepare initial state
-    initial_state = {
-        "resume": body.resume,
-        "job_description": body.job_description,
-        "mode": "incremental",
-    }
+    logger.info("enhance_incremental_stream: starting real-time streaming")
+    start_time = datetime.utcnow()
     
     try:
-        # Run graph in executor to avoid blocking
-        # (LangGraph invoke is synchronous)
-        loop = asyncio.get_event_loop()
-        state = await loop.run_in_executor(
-            None,
-            graph.invoke,
-            initial_state
-        )
+        # Step 1: Run mapping (synchronous, fast)
+        yield f"data: {json.dumps({'event_type': 'mapping_start', 'status': 'in_progress', 'timestamp': datetime.utcnow().isoformat() + 'Z'})}\n\n"
         
-        # Stream progress events
-        progress_events = state.get("progress_events", [])
-        for event in progress_events:
+        mapping_state = {
+            "resume": body.resume,
+            "job_description": body.job_description,
+        }
+        
+        loop = asyncio.get_event_loop()
+        mapping_result_dict = await loop.run_in_executor(
+            None,
+            lambda: mapping_node(mapping_state, llm)
+        )
+        mapping_result = mapping_result_dict.get("mapping_result")
+        
+        if mapping_result is None:
+            yield f"data: {json.dumps({'event_type': 'error', 'error_message': 'Mapping failed'})}\n\n"
+            return
+        
+        yield f"data: {json.dumps({'event_type': 'mapping_complete', 'status': 'complete', 'match_score': mapping_result.match_score, 'timestamp': datetime.utcnow().isoformat() + 'Z'})}\n\n"
+        
+        # Check score threshold for feedback path
+        from core.config import get_settings
+        settings = get_settings()
+        if mapping_result.match_score < settings.SCORE_THRESHOLD:
+            # Feedback path - not enough alignment
+            from graph.nodes.feedback import feedback_node
+            feedback_state = {
+                "resume": body.resume,
+                "job_description": body.job_description,
+                "mapping_result": mapping_result,
+            }
+            feedback_result = await loop.run_in_executor(
+                None,
+                lambda: feedback_node(feedback_state, llm)
+            )
+            
+            final_state = {
+                "resume": body.resume.model_dump(mode="json"),
+                "job_description": body.job_description.model_dump(mode="json"),
+                "mapping_result": mapping_result.model_dump(mode="json"),
+                "feedback_message": feedback_result.get("feedback_message"),
+            }
+            
+            yield f"data: {json.dumps({'event_type': 'complete', 'status': 'feedback', 'state': final_state, 'timestamp': datetime.utcnow().isoformat() + 'Z'})}\n\n"
+            return
+        
+        # Step 2: Stream enhancement with real-time deltas
+        full_enhancement_output = None
+        section_timings = {}
+        all_events = []
+        
+        async for event in stream_all_sections(
+            resume=body.resume,
+            mapping_result=mapping_result,
+            llm=llm,
+        ):
+            # Handle internal results event (not sent to client)
+            if event.get("event_type") == "_internal_results":
+                full_enhancement_output = event.get("full_enhancement_output")
+                section_timings = event.get("section_timings", {})
+                continue
+            
+            # Stream the event to client immediately
+            all_events.append(event)
             yield f"data: {json.dumps(event)}\n\n"
         
-        # Final event with complete state
+        # Step 3: Run format node (synchronous, fast)
+        if full_enhancement_output is None:
+            full_enhancement_output = FullEnhancementOutput()
+        
+        format_state = {
+            "resume": body.resume,
+            "full_enhancement_output": full_enhancement_output,
+        }
+        
+        format_result = await loop.run_in_executor(
+            None,
+            format_node,
+            format_state
+        )
+        enhanced_resume = format_result.get("enhanced_resume")
+        
+        # Step 4: Run report node (synchronous)
+        report_state = {
+            "resume": body.resume,
+            "enhanced_resume": enhanced_resume,
+            "full_enhancement_output": full_enhancement_output,
+        }
+        
+        report_result = await loop.run_in_executor(
+            None,
+            lambda: report_node(report_state, llm)
+        )
+        report_summary = report_result.get("report_summary")
+        
+        # Build final state
+        final_state = {
+            "resume": body.resume.model_dump(mode="json"),
+            "job_description": body.job_description.model_dump(mode="json"),
+            "mapping_result": mapping_result.model_dump(mode="json"),
+            "full_enhancement_output": full_enhancement_output.model_dump(mode="json") if full_enhancement_output else None,
+            "enhanced_resume": enhanced_resume.model_dump(mode="json") if enhanced_resume else None,
+            "report_summary": report_summary,
+            "section_timings": section_timings,
+            "mode": "incremental",
+        }
+        
+        # Final complete event
         final_event = {
             "event_type": "complete",
             "status": "complete",
-            "state": _state_to_jsonable(state),
+            "state": final_state,
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
         yield f"data: {json.dumps(final_event)}\n\n"

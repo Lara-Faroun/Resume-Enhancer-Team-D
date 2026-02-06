@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import get_settings
+from core.config import get_settings
 from graph.graph import build_graph
 
 # -----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
     # Try initializing Gemini first, fallback to OpenAI if it fails
     llm = None
-    
+
     # Attempt to use Gemini
     if settings.GOOGLE_API_KEY:
         try:
@@ -47,24 +47,33 @@ async def lifespan(app: FastAPI):
                 temperature=0,
                 convert_system_message_to_human=True,  # Gemini doesn't support system messages natively
             )
-            
+
             logger.info(f"✓ Gemini LLM initialized successfully: {settings.GEMINI_LLM_MODEL}")
         except Exception as e:
             logger.warning(f"Failed to initialize Gemini: {e}")
             logger.info("Falling back to OpenAI...")
             llm = None
-    
+
     # Fallback to OpenAI if Gemini failed or no API key
     if llm is None:
         if not settings.OPENAI_API_KEY:
             logger.error("Neither GOOGLE_API_KEY nor OPENAI_API_KEY is set!")
             raise ValueError("At least one LLM API key (GOOGLE_API_KEY or OPENAI_API_KEY) must be configured")
-        
+
         logger.info(f"Initializing OpenAI model: {settings.OPENAI_LLM_MODEL}")
 
-        llm = ChatOpenAI(model = settings.OPENAI_LLM_MODEL, open_api_key = settings.OPENAI_API_KEY )
-        logger.info(f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}")
-    
+        # llm = ChatOpenAI(model = settings.OPENAI_LLM_MODEL, open_api_key = settings.OPENAI_API_KEY )
+        llm = ChatOpenAI(
+            model=settings.OPENAI_LLM_MODEL,
+            api_key=settings.OPENAI_API_KEY,
+            openai_api_base="https://openrouter.ai/api/v1",
+            temperature=0,
+        ) 
+
+        logger.info(
+            f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}"
+        )
+
     app.state.llm = llm
 
     # Compile LangGraph once per app instance, reusing the shared LLM.

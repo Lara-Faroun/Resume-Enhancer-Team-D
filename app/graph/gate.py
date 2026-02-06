@@ -7,7 +7,7 @@ This is used by the LangGraph workflow to decide whether to:
 """
 import logging
 
-from app.core.config import get_settings
+from core.config import get_settings
 from graph.state import ResumeEnhancerState
 
 logger = logging.getLogger(__name__)

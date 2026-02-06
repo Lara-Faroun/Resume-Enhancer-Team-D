@@ -1,0 +1,1 @@
+"""Resume Enhancer application package."""

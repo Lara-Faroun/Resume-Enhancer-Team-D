@@ -51,3 +51,45 @@ def build_enhance_prompt_user(resume_json: str, mapping_result_json: str) -> str
         mapping_result_json=mapping_result_json,
     )
 
+
+def build_section_prompt_user(
+    section_name: str,
+    resume_json: str,
+    mapping_result_json: str
+) -> str:
+    """
+    Build prompt for enhancing a single section.
+    
+    Args:
+        section_name: One of: summary, experiences, educations, skills,
+                      certifications, languages, projects
+        resume_json: Full resume as JSON string
+        mapping_result_json: Mapping result as JSON string
+    
+    Returns:
+        Prompt string for the LLM
+    """
+    section_display = section_name.replace("_", " ").title()
+    
+    return f"""## Resume (structured)
+{resume_json}
+
+## Mapping result (structured)
+{mapping_result_json}
+
+## Task
+Enhance ONLY the '{section_display}' section of the resume following these rules:
+
+1. Do NOT invent or fabricate information
+2. Do NOT add technologies not in the original resume
+3. You may:
+   - Rephrase for clarity and impact
+   - Reorder content to highlight relevance
+   - Emphasize matches with the job description
+4. Keep all facts consistent with the original
+5. If the section is empty in the original, leave it empty
+
+Return a {section_name.capitalize()}EnhancementOutput object with:
+- enhanced: The enhanced {section_display} content
+- reasons: List of ChangeReason objects explaining each change
+"""

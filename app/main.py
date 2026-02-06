@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.config import get_settings
+from app.core.config import get_settings
 from graph.graph import build_graph
 
 # -----------------------------------------------------------------------------

@@ -167,7 +167,7 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
     start_time = datetime.utcnow()
     
     try:
-        # Step 1: Run mapping (synchronous, fast)
+        # Step 1: Run mapping (async)
         yield f"data: {json.dumps({'event_type': 'mapping_start', 'status': 'in_progress', 'timestamp': datetime.utcnow().isoformat() + 'Z'})}\n\n"
         
         mapping_state = {
@@ -175,11 +175,7 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
             "job_description": body.job_description,
         }
         
-        loop = asyncio.get_event_loop()
-        mapping_result_dict = await loop.run_in_executor(
-            None,
-            lambda: mapping_node(mapping_state, llm)
-        )
+        mapping_result_dict = await mapping_node(mapping_state, llm)
         mapping_result = mapping_result_dict.get("mapping_result")
         
         if mapping_result is None:
@@ -199,10 +195,7 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
                 "job_description": body.job_description,
                 "mapping_result": mapping_result,
             }
-            feedback_result = await loop.run_in_executor(
-                None,
-                lambda: feedback_node(feedback_state, llm)
-            )
+            feedback_result = await feedback_node(feedback_state, llm)
             
             final_state = {
                 "resume": body.resume.model_dump(mode="json"),
@@ -234,7 +227,7 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
             all_events.append(event)
             yield f"data: {json.dumps(event)}\n\n"
         
-        # Step 3: Run format node (synchronous, fast)
+        # Step 3: Run format node (sync — run in executor)
         if full_enhancement_output is None:
             full_enhancement_output = FullEnhancementOutput()
         
@@ -243,6 +236,7 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
             "full_enhancement_output": full_enhancement_output,
         }
         
+        loop = asyncio.get_event_loop()
         format_result = await loop.run_in_executor(
             None,
             format_node,
@@ -250,17 +244,14 @@ async def enhance_incremental_stream(request: Request, body: EnhanceRequest):
         )
         enhanced_resume = format_result.get("enhanced_resume")
         
-        # Step 4: Run report node (synchronous)
+        # Step 4: Run report node (async)
         report_state = {
             "resume": body.resume,
             "enhanced_resume": enhanced_resume,
             "full_enhancement_output": full_enhancement_output,
         }
         
-        report_result = await loop.run_in_executor(
-            None,
-            lambda: report_node(report_state, llm)
-        )
+        report_result = await report_node(report_state, llm)
         report_summary = report_result.get("report_summary")
         
         # Build final state

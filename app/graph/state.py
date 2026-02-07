@@ -61,6 +61,34 @@ class ResumeEnhancerState(BaseModel):
     # --- Feedback path (when score < threshold) ---
     feedback_message: Optional[str] = Field(None, description="User feedback when score below threshold.")
 
+    # --- Mode support (legacy, incremental, sectional) ---
+    mode: Optional[str] = Field(
+        "legacy",
+        description="Enhancement mode: 'legacy' (single call), 'incremental' (SSE streaming), or 'sectional' (per-section with fallbacks)"
+    )
+    progress_events: Optional[list] = Field(
+        default_factory=list,
+        description="Event log for incremental mode (section start/complete events)"
+    )
+    section_timings: Optional[dict] = Field(
+        default_factory=dict,
+        description="Elapsed time per section in milliseconds"
+    )
+    token_usage: Optional[dict] = Field(
+        default_factory=dict,
+        description="Token usage per section: {section: {input: N, output: M}}"
+    )
+
+    # --- Sectional mode support ---
+    section_errors: Optional[dict] = Field(
+        default_factory=dict,
+        description="Section-level errors in sectional mode: {section_name: error_message}"
+    )
+    sectional_metadata: Optional[dict] = Field(
+        default_factory=dict,
+        description="Processing metadata for sectional mode (counts, timing, status)"
+    )
+
     class Config:
         arbitrary_types_allowed = True
         populate_by_name = True

@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
     # Try initializing Gemini first, fallback to OpenAI if it fails
     llm = None
-    
+
     # Attempt to use Gemini
     if settings.GOOGLE_API_KEY:
         try:
@@ -56,19 +56,19 @@ async def lifespan(app: FastAPI):
                 temperature=0,
                 convert_system_message_to_human=True,  # Gemini doesn't support system messages natively
             )
-            
+
             logger.info(f"✓ Gemini LLM initialized successfully: {settings.GEMINI_LLM_MODEL}")
         except Exception as e:
             logger.warning(f"Failed to initialize Gemini: {e}")
             logger.info("Falling back to OpenAI...")
             llm = None
-    
+
     # Fallback to OpenAI if Gemini failed or no API key
     if llm is None:
         if not settings.OPENAI_API_KEY:
             logger.error("Neither GOOGLE_API_KEY nor OPENAI_API_KEY is set!")
             raise ValueError("At least one LLM API key (GOOGLE_API_KEY or OPENAI_API_KEY) must be configured")
-        
+
         logger.info(f"Initializing OpenAI model: {settings.OPENAI_LLM_MODEL}")
 
         llm = ChatOpenAI(

@@ -9,10 +9,13 @@ This module builds a StateGraph with the following flow:
   once in main.py and injected here when building the graph.
 - format is pure Python; report uses the shared LLM to summarize changes.
 """
+import logging
 from typing import Any, Dict
 import asyncio
 
 from langgraph.graph import END, StateGraph
+
+logger = logging.getLogger(__name__)
 
 from graph.gate import route_after_mapping
 from graph.nodes import (
@@ -22,6 +25,8 @@ from graph.nodes import (
     report_node,
     feedback_node,
 )
+from graph.nodes.enhance_incremental import enhance_incremental_node
+from graph.nodes.enhance_sectional import enhance_sectional_node
 from graph.state import ResumeEnhancerState
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
@@ -40,8 +45,18 @@ def build_graph(llm: Any):
     async def mapping_with_llm(state):
         return await mapping_node(state, llm)
 
-    async def enhance_with_llm(state):
-        return await enhance_node(state, llm)
+    async def enhance_router(state):
+        """Route to legacy, incremental, or sectional enhance based on state.mode."""
+        mode = state.get("mode", "legacy") if isinstance(state, dict) else getattr(state, "mode", "legacy")
+        if mode == "incremental":
+            logger.info("enhance_router: using incremental mode")
+            return enhance_incremental_node(state, llm)
+        elif mode == "sectional":
+            logger.info("enhance_router: using sectional mode")
+            return enhance_sectional_node(state, llm)
+        else:
+            logger.info("enhance_router: using legacy mode")
+            return await enhance_node(state, llm)
 
     async def feedback_with_llm(state):
         return await feedback_node(state, llm)
@@ -50,9 +65,8 @@ def build_graph(llm: Any):
         return await report_node(state, llm)
 
     graph.add_node("mapping", mapping_with_llm)
-    graph.add_node("enhance", enhance_with_llm)
+    graph.add_node("enhance", enhance_router)
     graph.add_node("feedback", feedback_with_llm)
-
     graph.add_node("format", format_node)
     graph.add_node("report", report_with_llm)
 

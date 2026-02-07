@@ -1,0 +1,335 @@
+{
+    "resume": {
+        "personal_info": {
+            "full_name": "Ahmad Khalil",
+            "phone_number": "+49 151 23456789",
+            "email_address": "ahmad.khalil@example.com",
+            "linkedin": "https://www.linkedin.com/in/ahmad-khalil",
+            "personal_website": "https://ahmadkhalil.dev"
+        },
+        "summary": "Backend-focused software engineer with hands-on experience in building REST APIs and data-driven applications using Python and FastAPI. Interested in scalable systems and AI-powered solutions.",
+        "educations": [
+            {
+                "degree": "Bachelor of Computer Engineering",
+                "major": "Computer Engineering",
+                "university_name": "Damascus University",
+                "city": "Damascus",
+                "country": "Syria",
+                "start_date": "2019-09-01T00:00:00Z",
+                "end_date": "2024-07-01T00:00:00Z"
+            }
+        ],
+        "experiences": [
+            {
+                "role_title": "Junior Backend Developer",
+                "company_name": "Tech Solutions GmbH",
+                "start_date": "2024-02-01T00:00:00Z",
+                "end_date": "2025-12-01T00:00:00Z",
+                "description": [
+                    "Developed RESTful APIs using FastAPI and Python",
+                    "Integrated PostgreSQL databases and optimized queries",
+                    "Collaborated with frontend teams to deliver end-to-end features"
+                ],
+                "is_volunteer": false
+            }
+        ],
+        "skills": [
+            {
+                "skill_name": "Python",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "FastAPI",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "PostgreSQL",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "Problem Solving",
+                "skill_type": "soft"
+            }
+        ],
+        "certifications": [
+            {
+                "certification_name": "Backend Development with Python",
+                "issuing_organization": "Coursera",
+                "issue_date": "2024-06-15T00:00:00Z"
+            }
+        ],
+        "languages": [
+            {
+                "language": "Arabic",
+                "proficiency_level": "C2"
+            },
+            {
+                "language": "English",
+                "proficiency_level": "B2"
+            }
+        ],
+        "projects": [
+            {
+                "project_name": "AI Resume Enhancer",
+                "description": [
+                    "Built an AI-powered system to analyze and enhance resumes using LLMs",
+                    "Implemented LangGraph-based orchestration for multi-step AI workflows"
+                ],
+                "project_link": "https://github.com/example/ai-resume-enhancer"
+            }
+        ]
+    },
+    "job_description": {
+        "job_title": "Backend Software Engineer",
+        "company_name": "Innovative Tech GmbH",
+        "responsibilities": [
+            "Design and implement scalable backend services",
+            "Develop and maintain RESTful APIs",
+            "Collaborate with cross-functional teams"
+        ],
+        "requirements": [
+            "Strong experience with Python",
+            "Experience building APIs using FastAPI or similar frameworks",
+            "Basic knowledge of relational databases"
+        ],
+        "required_skills": [
+            "Python",
+            "FastAPI",
+            "SQL"
+        ],
+        "preferred_skills": [
+            "Docker",
+            "Cloud platforms (AWS or GCP)"
+        ],
+        "seniority_level": "mid",
+        "soft_skills": [
+            "Communication",
+            "Teamwork",
+            "Problem Solving"
+        ]
+    },
+    "mapping_result": {
+        "matched_skills": [
+            "Python",
+            "FastAPI",
+            "SQL",
+            "Problem Solving"
+        ],
+        "matched_requirements": [
+            "Develop and maintain RESTful APIs",
+            "Collaborate with cross-functional teams",
+            "Experience building APIs using FastAPI or similar frameworks",
+            "Basic knowledge of relational databases"
+        ],
+        "gaps": [
+            "Strong experience with Python",
+            "Design and implement scalable backend services",
+            "Docker",
+            "Cloud platforms (AWS or GCP)",
+            "Mid-level seniority (resume shows Junior Backend Developer with limited professional experience duration)"
+        ],
+        "match_score": 6
+    },
+    "full_enhancement_output": {
+        "summary": {
+            "enhanced": "Backend Software Engineer with hands-on experience in developing robust RESTful APIs and data-driven applications using Python and FastAPI. Proven ability to collaborate with cross-functional teams and a keen interest in scalable systems and AI-powered solutions.",
+            "reasons": [
+                {
+                    "field_or_location": "summary",
+                    "reason": "Rephrased to emphasize 'robust' APIs and directly incorporate the 'collaborate with cross-functional teams' requirement, enhancing alignment with the job description."
+                }
+            ]
+        },
+        "experiences": {
+            "enhanced": [
+                {
+                    "role_title": "Junior Backend Developer",
+                    "company_name": "Tech Solutions GmbH",
+                    "start_date": "2024-02-01T00:00:00Z",
+                    "end_date": "2025-12-01T00:00:00Z",
+                    "description": [
+                        "Developed and maintained robust RESTful APIs using Python and FastAPI, ensuring efficient data exchange and system functionality.",
+                        "Integrated and optimized PostgreSQL databases, demonstrating basic knowledge of relational databases and improving application performance.",
+                        "Collaborated effectively with cross-functional frontend teams to successfully deliver end-to-end features and enhance user experience."
+                    ],
+                    "is_volunteer": false
+                }
+            ],
+            "reasons": [
+                {
+                    "field_or_location": "experiences[0].description[0]",
+                    "reason": "Rephrased to include 'maintained' and 'robust' to align with the 'Develop and maintain RESTful APIs' requirement and add impact."
+                },
+                {
+                    "field_or_location": "experiences[0].description[1]",
+                    "reason": "Rephrased to explicitly mention 'optimized' and 'basic knowledge of relational databases' to directly address the 'Basic knowledge of relational databases' requirement and highlight impact."
+                },
+                {
+                    "field_or_location": "experiences[0].description[2]",
+                    "reason": "Rephrased to use 'collaborated effectively with cross-functional frontend teams' to directly match the 'Collaborate with cross-functional teams' requirement."
+                }
+            ]
+        },
+        "educations": {
+            "enhanced": [
+                {
+                    "degree": "Bachelor of Computer Engineering",
+                    "major": "Computer Engineering",
+                    "university_name": "Damascus University",
+                    "city": "Damascus",
+                    "country": "Syria",
+                    "start_date": "2019-09-01T00:00:00Z",
+                    "end_date": "2024-07-01T00:00:00Z"
+                }
+            ],
+            "reasons": []
+        },
+        "skills": {
+            "enhanced": [
+                {
+                    "skill_name": "Python",
+                    "skill_type": "technical"
+                },
+                {
+                    "skill_name": "FastAPI",
+                    "skill_type": "technical"
+                },
+                {
+                    "skill_name": "PostgreSQL",
+                    "skill_type": "technical"
+                },
+                {
+                    "skill_name": "Problem Solving",
+                    "skill_type": "soft"
+                }
+            ],
+            "reasons": []
+        },
+        "certifications": {
+            "enhanced": [
+                {
+                    "certification_name": "Backend Development with Python",
+                    "issuing_organization": "Coursera",
+                    "issue_date": "2024-06-15T00:00:00Z"
+                }
+            ],
+            "reasons": []
+        },
+        "languages": {
+            "enhanced": [
+                {
+                    "language": "Arabic",
+                    "proficiency_level": "C2"
+                },
+                {
+                    "language": "English",
+                    "proficiency_level": "B2"
+                }
+            ],
+            "reasons": []
+        },
+        "projects": {
+            "enhanced": [
+                {
+                    "project_name": "AI Resume Enhancer",
+                    "description": [
+                        "Developed an AI-powered system to analyze and enhance resumes using Large Language Models (LLMs), demonstrating advanced problem-solving and technical application.",
+                        "Implemented LangGraph-based orchestration for complex, multi-step AI workflows, showcasing expertise in modern AI development practices."
+                    ],
+                    "project_link": "https://github.com/example/ai-resume-enhancer"
+                }
+            ],
+            "reasons": [
+                {
+                    "field_or_location": "projects[0].description[0]",
+                    "reason": "Rephrased to emphasize 'Large Language Models (LLMs)' and highlight 'advanced problem-solving and technical application' to add impact and connect to the 'Problem Solving' skill."
+                },
+                {
+                    "field_or_location": "projects[0].description[1]",
+                    "reason": "Rephrased to emphasize 'complex' workflows and 'modern AI development practices' to add impact and showcase technical depth."
+                }
+            ]
+        }
+    },
+    "enhanced_resume": {
+        "personal_info": {
+            "full_name": "Ahmad Khalil",
+            "phone_number": "+49 151 23456789",
+            "email_address": "ahmad.khalil@example.com",
+            "linkedin": "https://www.linkedin.com/in/ahmad-khalil",
+            "personal_website": "https://ahmadkhalil.dev"
+        },
+        "summary": "Backend Software Engineer with hands-on experience in developing robust RESTful APIs and data-driven applications using Python and FastAPI. Proven ability to collaborate with cross-functional teams and a keen interest in scalable systems and AI-powered solutions.",
+        "educations": [
+            {
+                "degree": "Bachelor of Computer Engineering",
+                "major": "Computer Engineering",
+                "university_name": "Damascus University",
+                "city": "Damascus",
+                "country": "Syria",
+                "start_date": "2019-09-01T00:00:00Z",
+                "end_date": "2024-07-01T00:00:00Z"
+            }
+        ],
+        "experiences": [
+            {
+                "role_title": "Junior Backend Developer",
+                "company_name": "Tech Solutions GmbH",
+                "start_date": "2024-02-01T00:00:00Z",
+                "end_date": "2025-12-01T00:00:00Z",
+                "description": [
+                    "Developed and maintained robust RESTful APIs using Python and FastAPI, ensuring efficient data exchange and system functionality.",
+                    "Integrated and optimized PostgreSQL databases, demonstrating basic knowledge of relational databases and improving application performance.",
+                    "Collaborated effectively with cross-functional frontend teams to successfully deliver end-to-end features and enhance user experience."
+                ],
+                "is_volunteer": false
+            }
+        ],
+        "skills": [
+            {
+                "skill_name": "Python",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "FastAPI",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "PostgreSQL",
+                "skill_type": "technical"
+            },
+            {
+                "skill_name": "Problem Solving",
+                "skill_type": "soft"
+            }
+        ],
+        "certifications": [
+            {
+                "certification_name": "Backend Development with Python",
+                "issuing_organization": "Coursera",
+                "issue_date": "2024-06-15T00:00:00Z"
+            }
+        ],
+        "languages": [
+            {
+                "language": "Arabic",
+                "proficiency_level": "C2"
+            },
+            {
+                "language": "English",
+                "proficiency_level": "B2"
+            }
+        ],
+        "projects": [
+            {
+                "project_name": "AI Resume Enhancer",
+                "description": [
+                    "Developed an AI-powered system to analyze and enhance resumes using Large Language Models (LLMs), demonstrating advanced problem-solving and technical application.",
+                    "Implemented LangGraph-based orchestration for complex, multi-step AI workflows, showcasing expertise in modern AI development practices."
+                ],
+                "project_link": "https://github.com/example/ai-resume-enhancer"
+            }
+        ]
+    },
+    "report_summary": "Here's a summary of the key changes made to your resume to better align it with the target job description:\n\n* **Professional Summary:** Your summary was rephrased to more strongly emphasize your experience with developing robust APIs and your ability to collaborate effectively with cross-functional teams. This directly addresses key requirements outlined in the job description.\n\n* **Experience Section (First Entry):** We refined the descriptions for your first experience to highlight specific achievements. This included explicitly mentioning your role in maintaining robust RESTful APIs, optimizing systems, and demonstrating your basic knowledge of relational databases. We also strengthened the language to showcase your effective collaboration with cross-functional frontend teams, directly matching job requirements and enhancing the impact of your contributions.\n\n* **Projects Section (First Entry):** For your first project, the descriptions were updated to emphasize your work with Large Language Models (LLMs), highlighting your advanced problem-solving skills and technical application. We also showcased your experience with complex workflows and modern AI development practices to demonstrate your technical depth and innovation.\n\nThese adjustments aim to make your qualifications stand out more clearly for this specific role. Please review them and let me know if you have any questions before exporting!"
+}

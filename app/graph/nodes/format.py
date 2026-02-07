@@ -12,6 +12,7 @@ from graph.state import ResumeEnhancerState, normalize_state
 from graph.utils import log_node_timing
 from schemas.resume import Resume
 from schemas.enhancement import FullEnhancementOutput
+from utils.validation import validate_projects, validate_experiences, validate_educations
 
 logger = logging.getLogger(__name__)
 
@@ -51,15 +52,21 @@ def _build_enhanced_resume(
     else:
         summary = resume.summary
 
-    # Experiences
+    # Experiences (with validation)
     if full_output.experiences is not None:
-        experiences = full_output.experiences.enhanced
+        experiences = validate_experiences(
+            full_output.experiences.enhanced,
+            resume.experiences
+        )
     else:
         experiences = resume.experiences
 
-    # Educations
+    # Educations (with validation)
     if full_output.educations is not None:
-        educations = full_output.educations.enhanced
+        educations = validate_educations(
+            full_output.educations.enhanced,
+            resume.educations
+        )
     else:
         educations = resume.educations
 
@@ -81,9 +88,12 @@ def _build_enhanced_resume(
     else:
         languages = resume.languages
 
-    # Projects
+    # Projects (with validation)
     if full_output.projects is not None:
-        projects = full_output.projects.enhanced
+        projects = validate_projects(
+            full_output.projects.enhanced,
+            resume.projects
+        )
     else:
         projects = resume.projects
 

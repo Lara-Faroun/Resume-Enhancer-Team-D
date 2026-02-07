@@ -1,4 +1,5 @@
 import requests
+import json
 from config.settings import AppConfig
 
 class ResumeEnhancerAPI:
@@ -21,7 +22,57 @@ class ResumeEnhancerAPI:
         response.raise_for_status()
         return response.json()
     
+    def enhance_resume_streaming(self, resume_data: dict, job_description_data: dict):
+        """
+        Stream-enabled enhance endpoint using SSE (Server-Sent Events).
+        
+        Yields events as they arrive from the backend:
+        - mapping_start
+        - mapping_complete
+        - section_start
+        - section_delta
+        - section_complete
+        - complete
+        """
+        url = f"{self.base_url}{AppConfig.API_ENHANCE_ENDPOINT}?mode=incremental"
+        
+        payload = {
+            'resume': resume_data,
+            'job_description': job_description_data
+        }
+        
+        headers = {
+            'Accept': 'text/event-stream',
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(
+            url, 
+            json=payload,
+            headers=headers,
+            timeout=self.timeout,
+            stream=True
+        )
+        response.raise_for_status()
+        
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                
+                if decoded_line.startswith('data: '):
+                    json_str = decoded_line[6:]
+                    
+                    try:
+                        event = json.loads(json_str)
+                        yield event
+                    except json.JSONDecodeError:
+                        continue
+    
     def enhance_resume(self, resume_data: dict, job_description_data: dict) -> dict:
+        """
+        Legacy (non-streaming) enhance endpoint.
+        Returns complete result in one response.
+        """
         url = f"{self.base_url}{AppConfig.API_ENHANCE_ENDPOINT}"
         
         payload = {
@@ -46,7 +97,6 @@ class ResumeEnhancerAPI:
         """
         url = f"{self.base_url}{AppConfig.API_EXPORT_RESUME_ENDPOINT}"
         params = {"type": file_type}
-        # Send the resume dict directly so FastAPI can validate it as Resume
         response = requests.post(url, json=resume_data, params=params, timeout=self.timeout)
         response.raise_for_status()
         return response.content

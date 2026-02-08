@@ -51,16 +51,19 @@ def render_results_section():
     
     st.markdown("---")
     
-    if match_score >= AppConfig.MIN_MATCH_SCORE:
+    # Step 3 = CV comparison (status was 'complete'); Step 4 = feedback only (status was 'feedback')
+    if st.session_state.step == 3:
         render_cv_comparison(enhance_data)
     else:
         render_feedback_display(enhance_data)
     
     st.markdown("---")
     
-    render_download_section(enhance_data, match_score)
+    # Only offer PDF/DOCX download when we have enhanced resume (step 3); step 4 shows New CV only
+    render_download_section(enhance_data, match_score, allow_export=(st.session_state.step == 3))
 
-def render_download_section(enhance_data, match_score):
+def render_download_section(enhance_data, match_score, allow_export=True):
+    # When allow_export is False (feedback flow / step 4), we only show "New CV"; no PDF/DOCX.
     # Local styles for download buttons (PDF white, DOCX baby blue)
     st.markdown(
         """
@@ -87,7 +90,7 @@ def render_download_section(enhance_data, match_score):
     
     col_pdf, col_docx = st.columns(2)
     
-    enhanced_resume = enhance_data.get('enhanced_resume', {}) if match_score >= AppConfig.MIN_MATCH_SCORE else {}
+    enhanced_resume = enhance_data.get('enhanced_resume', {}) if allow_export else {}
 
     # Build a user-specific, filesystem-safe base filename from the resume
     personal_info = enhanced_resume.get("personal_info", {}) if enhanced_resume else {}
@@ -97,7 +100,7 @@ def render_download_section(enhance_data, match_score):
     base_filename = f"{safe_slug}_resume"
     
     with col_pdf:
-        if match_score >= AppConfig.MIN_MATCH_SCORE:
+        if allow_export:
             if enhanced_resume:
                 try:
                     api_client = ResumeEnhancerAPI()
@@ -121,7 +124,7 @@ def render_download_section(enhance_data, match_score):
             st.info("💡 Low match - Consider improving skills or targeting different roles")
     
     with col_docx:
-        if match_score >= AppConfig.MIN_MATCH_SCORE:
+        if allow_export:
             if enhanced_resume:
                 try:
                     api_client = ResumeEnhancerAPI()

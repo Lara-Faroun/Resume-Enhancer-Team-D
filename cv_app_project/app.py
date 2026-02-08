@@ -23,7 +23,7 @@ if st.session_state.step == 1:
     render_upload_section()
 elif st.session_state.step == 2:
     render_processing_section()
-elif st.session_state.step == 3:
+elif st.session_state.step in (3, 4):
     render_results_section()
 
 st.markdown("---")

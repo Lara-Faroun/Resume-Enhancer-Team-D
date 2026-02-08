@@ -80,6 +80,9 @@ Enhance ONLY the '{section_display}' section of the resume following these rules
    - Emphasize matches with the job description
 4. Keep all facts consistent with the original
 5. If the section is empty in the original, leave it empty
+6. For date fields (issue_date, start_date, end_date), use ISO format: YYYY-MM-DD or YYYY-MM. Do NOT use formats like "May 2023" or "August 2023".
+7. For proficiency_level in languages, use ONLY: A1, A2, B1, B2, C1, C2, or Native. Do NOT use forms like "Advanced (C1)" or "C1 - Advanced".
+8. Do NOT change start_date, end_date. Preserve them exactly as in the original resume (same format and value).
 
 Return your response as valid JSON with this exact structure:
 {{
@@ -158,7 +161,7 @@ def _parse_section_json(raw_text: str, section_name: str, output_class) -> Optio
         result = output_class(**data)
         return result
     except (json.JSONDecodeError, ValueError, TypeError) as e:
-        logger.debug(f"_parse_section_json: failed to parse {section_name}: {e}")
+        logger.debug("_parse_section_json: failed to parse %s: %s", section_name, e)
         return None
 
 

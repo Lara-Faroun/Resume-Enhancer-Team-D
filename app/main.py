@@ -77,6 +77,7 @@ async def lifespan(app: FastAPI):
             openai_api_base="https://openrouter.ai/api/v1",
 
             temperature=0,
+            max_tokens=4096,
         )
         logger.info(f"✓ OpenAI LLM initialized successfully: {settings.OPENAI_LLM_MODEL}")
     

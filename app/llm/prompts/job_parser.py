@@ -9,9 +9,12 @@ STRICT RULES:
 - Match this schema exactly
 - IMPORTANT: Keep the output in the SAME language as the input text
 - Extract ALL responsibilities and ALL requirements mentioned.
-Do not omit items.
+- Do not omit items.
 - required_skills: ONLY tools, technologies, or measurable hard skills
 - Do NOT include responsibilities as skills
+- Do NOT put vague traits like "ownership", "AI mindset", or "proactive" in
+  required_skills; these belong in responsibilities, requirements, or
+  soft_skills instead.
 - If seniority not mentioned, set "mid"
 - Junior if internship/entry-level
 - Senior if 5+ years or manager role

@@ -8,7 +8,32 @@ def apply_custom_css():
         * {
             font-family: 'Inter', sans-serif;
         }
+          /* SVG icons */
+        .icon{
+          width: 1.1em;
+          height: 1.1em;
+          stroke-width: 2;
+          font-size: 1.5em;    
+          vertical-align: -0.15em;
+          margin-right: .4em;
+          display: inline-block;
+         }
+        .icon *{ stroke: #7655ae; }
+             
+     .icon-spinner { 
+        color: #22c55e !important; 
+        }
+
+        .icon-spin * {
+        stroke: currentColor !important;
+        stroke-width: 3 !important;
+        opacity: 1 !important;
+        }
+
         
+        .icon-spin {
+        font-size: 1.6em !important;
+        }
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
@@ -56,7 +81,17 @@ def apply_custom_css():
             position: relative;
             z-index: 1;
         }
-        
+        .hero-title .icon{
+            width: 1.2em;
+            height: 1.2em;
+            margin-right: .01em;
+            vertical-align: -0.18em;
+ 
+        }
+        .hero-title * {
+            stroke: #ffffff !important;
+            }
+
         .hero-subtitle {
             font-size: 1.15rem;
             opacity: 0.95;
@@ -137,7 +172,11 @@ def apply_custom_css():
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
-        
+        /* upload file */
+        button[data-testid="stBaseButton-primary"]  {
+        color: #ffffff !important;
+        }
+
         [data-testid="stMetricValue"] {
             font-size: 2.5rem;
             font-weight: 700;
@@ -319,5 +358,57 @@ def apply_custom_css():
             margin-bottom: 1rem;
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
+        /* animate Icons */ 
+            @keyframes icon-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+            }
+
+            @keyframes icon-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%      { transform: scale(1.08); opacity: 0.7; }
+            }
+
+
+            .icon-spin {
+            animation: icon-spin 0.9s linear infinite;
+            transform-origin: 50% 50%;
+            display: inline-block;
+            }
+
+            .icon-pulse {
+            animation: icon-pulse 1.1s ease-in-out infinite;
+            transform-origin: 50% 50%;
+            display: inline-block;
+            }
+
+            /* Bar */
+            [data-testid="stProgress"] > div > div {
+            background: linear-gradient(
+                270deg,
+                #22c55e,
+                #4ade80,
+                #86efac,
+                #22c55e
+            );
+            background-size: 400% 400%;
+            animation: greenFlow 3s ease infinite;
+        }
+
+        @keyframes greenFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .progress-success [data-testid="stProgress"] > div > div {
+        background: linear-gradient(90deg, #16a34a, #4ade80) !important;
+        }
+        .progress-error [data-testid="stProgress"] > div > div {
+            background: linear-gradient(90deg, #dc2626, #f87171) !important;
+        }
+
+
+
         </style>
     """, unsafe_allow_html=True)

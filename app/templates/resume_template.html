@@ -14,7 +14,7 @@
 
 body {
   font-family: "Calibri", "Arial", sans-serif;
-  font-size: 11pt;
+  font-size: 10pt;
   color: #000;
   line-height: 1.4;
 }
@@ -196,12 +196,18 @@ li {
   <h2>Skills</h2>
   {% if skills_grouped.technical %}
   <div class="skills-group">
-    <strong>Technical Skills:</strong> {{ skills_grouped.technical | join(', ') }}
+    <strong>Technical Skills</strong>
+    <div>
+      {{ skills_grouped.technical | join(', ') }}
+    </div>
   </div>
   {% endif %}
   {% if skills_grouped.soft %}
   <div class="skills-group">
-    <strong>Soft Skills:</strong> {{ skills_grouped.soft | join(', ') }}
+    <strong>Soft Skills</strong>
+    <div>
+      {{ skills_grouped.soft | join(', ') }}
+    </div>
   </div>
   {% endif %}
   {% endif %}

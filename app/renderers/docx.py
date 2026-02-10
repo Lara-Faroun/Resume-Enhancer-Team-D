@@ -236,13 +236,21 @@ def render_resume_docx(resume: Resume) -> bytes:
     if skills:
         _add_section_title(doc, "Core Competencies")
         if skills.get("technical"):
-            doc.add_paragraph(
-                "Technical Skills: " + ", ".join(skills["technical"])
-            )
+            # Heading line
+            p = doc.add_paragraph()
+            run = p.add_run("Technical Skills")
+            run.bold = True
+
+            # Content line
+            doc.add_paragraph(", ".join(skills["technical"]))
         if skills.get("soft"):
-            doc.add_paragraph(
-                "Soft Skills: " + ", ".join(skills["soft"])
-            )
+            # Heading line
+            p = doc.add_paragraph()
+            run = p.add_run("Soft Skills")
+            run.bold = True
+
+            # Content line
+            doc.add_paragraph(", ".join(skills["soft"]))
 
     # =========================
     # Languages

@@ -20,8 +20,6 @@ Matching Rules:
   - a short quote or paraphrase of the job requirement (from the job description),
   - and a short description of the specific resume evidence (role + bullet or
     section) that satisfies it.
-- Format each matched_requirements string like:
-  "JD: <requirement> — Resume: <role>, <brief evidence>."
 - If a requirement is only implied or partially supported, treat it as matched
   with lower confidence and reflect this by either:
   - including it with wording that shows it is partially or implicitly covered,

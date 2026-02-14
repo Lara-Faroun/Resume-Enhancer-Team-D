@@ -1,13 +1,14 @@
+# Base deps installed first via requirements.docker.base.txt
 fastapi
 uvicorn
 python-multipart
-weasyprint
 Jinja2==3.1.5
 python-docx==1.0.1
-PyMuPDF
 pydantic[email]
 email-validator
 pydantic-settings
+weasyprint
+PyMuPDF
 langgraph
 langchain-core
 langchain-openai

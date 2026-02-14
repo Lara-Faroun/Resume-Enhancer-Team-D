@@ -1,0 +1,36 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: resume-enhancer-api:latest
+    container_name: resume-api
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./app/.env
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: resume-enhancer-streamlit:latest
+    container_name: resume-streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - app-net
+    restart: unless-stopped
+
+networks:
+  app-net:
+    driver: bridge

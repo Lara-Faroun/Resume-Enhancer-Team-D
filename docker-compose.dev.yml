@@ -1,0 +1,43 @@
+# Dev: no volume mounts. Code runs from image. Rebuild for code changes: up --build
+# If you see /code, /ui, or /app/frontend errors: run "docker compose -f docker-compose.dev.yml down" then "up --build"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: resume-enhancer-api:dev
+    container_name: resume-api-dev
+    user: root
+    working_dir: /app
+    environment:
+      - LOG_DIR=/tmp/logs
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./app/.env
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    networks:
+      - app-net
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: resume-enhancer-streamlit:dev
+    container_name: resume-streamlit-dev
+    user: root
+    working_dir: /app
+    environment:
+      - API_BASE_URL=http://api:8000
+      - API_TIMEOUT=120
+    ports:
+      - "8501:8501"
+    command: ["streamlit", "run", "/app/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    depends_on:
+      - api
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

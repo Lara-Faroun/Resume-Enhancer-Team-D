@@ -1,4 +1,5 @@
 from typing import Any, Dict
+import logging
 import os
 import shutil
 import tempfile
@@ -12,7 +13,7 @@ from core.parsing.job_parser import parse_job_description
 from schemas.resume import Resume
 from schemas.job_description import JobDescription
 
-
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -68,6 +69,22 @@ async def parse_resume_and_job(
         job_obj = await parse_job_description(job_description, llm_service)
 
         return ParseResponse(resume=resume_obj, job_description=job_obj)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Parse failed: %s", e)
+        msg = str(e)
+        # User-friendly hint for auth errors (OpenRouter 401 / invalid key)
+        if "401" in msg or "AuthenticationError" in type(e).__name__ or "User not found" in msg:
+            msg = (
+                "LLM authentication failed (401). "
+                "Using OpenRouter: get a key at https://openrouter.ai/keys and set OPENAI_API_KEY in app/.env. "
+                "Using OpenAI: set OPENAI_API_BASE=https://api.openai.com/v1 and use a valid OpenAI key."
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Parse failed: {msg}",
+        )
     finally:
         # Cleanup temp file
         try:

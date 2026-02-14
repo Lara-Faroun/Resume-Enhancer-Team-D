@@ -2,6 +2,7 @@ import requests
 import json
 from config.settings import AppConfig
 
+
 class ResumeEnhancerAPI:
     
     def __init__(self, base_url: str = None):
@@ -19,7 +20,13 @@ class ResumeEnhancerAPI:
         }
         
         response = requests.post(url, files=files, data=data, timeout=self.timeout)
-        response.raise_for_status()
+        if not response.ok:
+            try:
+                detail = response.json().get("detail", "")
+            except Exception:
+                detail = ""
+            msg = str(detail) if detail else f"{response.status_code} {response.reason}"
+            raise requests.HTTPError(msg, response=response)
         return response.json()
     
     def enhance_resume_streaming(self, resume_data: dict, job_description_data: dict):

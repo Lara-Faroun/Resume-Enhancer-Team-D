@@ -1,14 +1,10 @@
+# Install first (smaller, stable). Reduces single pip resolve size and improves cache.
+pip>=24.2
 fastapi
 uvicorn
 python-multipart
-weasyprint
 Jinja2==3.1.5
 python-docx==1.0.1
-PyMuPDF
 pydantic[email]
 email-validator
 pydantic-settings
-langgraph
-langchain-core
-langchain-openai
-langchain-google-genai

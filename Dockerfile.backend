@@ -1,0 +1,35 @@
+# Backend: FastAPI under app/, entrypoint app/main.py -> main:app
+FROM python:3.11-slim-bookworm
+
+WORKDIR /app
+
+# WeasyPrint runtime deps (Debian Bookworm)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf-2.0-0 \
+    libffi8 \
+    libharfbuzz0b \
+    shared-mime-info \
+    fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip; install in two layers to avoid single large PyPI resolve (reduces JSON/timeout issues)
+COPY requirements.docker.base.txt requirements.docker.txt ./
+RUN pip install --no-cache-dir -r requirements.docker.base.txt
+
+RUN pip install --no-cache-dir --retries 5 --timeout 120 -r requirements.docker.txt
+
+# Application code: app/ -> /app (so main.py at /app/main.py)
+COPY app/ .
+
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

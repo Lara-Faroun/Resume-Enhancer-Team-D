@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from langchain_openai import ChatOpenAI
@@ -14,8 +15,12 @@ from llm.service import LLMService
 # -----------------------------------------------------------------------------
 # Logging
 # -----------------------------------------------------------------------------
-LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
-LOG_DIR.mkdir(exist_ok=True)
+LOG_DIR = Path(os.environ.get("LOG_DIR", Path(__file__).resolve().parent.parent / "logs"))
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    LOG_DIR = Path("/tmp/logs")
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "resume_enhancer.log"
 
 logging.basicConfig(
@@ -70,12 +75,16 @@ async def lifespan(app: FastAPI):
             raise ValueError("At least one LLM API key (GOOGLE_API_KEY or OPENAI_API_KEY) must be configured")
 
         logger.info(f"Initializing OpenAI model: {settings.OPENAI_LLM_MODEL}")
+        # Use OPENAI_API_BASE if set (e.g. https://api.openai.com/v1); otherwise OpenRouter
+        api_base = (settings.OPENAI_API_BASE or "").strip()
+        if not api_base:
+            api_base = "https://openrouter.ai/api/v1"
+        logger.info(f"Using API base: {api_base}")
 
         llm = ChatOpenAI(
             model=settings.OPENAI_LLM_MODEL,
             api_key=settings.OPENAI_API_KEY,
-            openai_api_base="https://openrouter.ai/api/v1",
-
+            openai_api_base=api_base,
             temperature=0,
             max_tokens=4096,
         )
